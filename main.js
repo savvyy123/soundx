@@ -167,7 +167,7 @@ octaveInput.addEventListener('blur', () => closeOctave(true));
 // 3 行目からは、行が増えた分だけヘッダーが下に伸びる（コード一覧はその下でスクロールする）
 // 入れたコードを押すと、「_」がそのコードの下に移り（直す場所）、一覧で次に押したコードと入れ替わる。もう一度押すとやめる
 // 「—」を押すと半分の長さになり、その前のコードが 2 拍（半小節）で次へ進む。もう一度押すと 4 拍（1 小節）に戻る
-// 行の終わりのコード（4 つ目・8 つ目…）は後ろに「—」がないので、いつも 4 拍
+// 「—」はどのコードの後ろにも付く（行の終わりの 4 つ目・8 つ目…も、行の右に付ける）ので、どのコードの長さも変えられる
 // 左の丸（A / B）を押すと、A メロと B メロの進行を切り替える。それぞれ別に作れる（Figma の 7 枚目）
 
 const PER_ROW = 4;
@@ -205,7 +205,7 @@ function dash(i) {
 
 function renderProgression() {
   progressionEl.replaceChildren();
-  // 「_」を出すのは、直していないとき。行の頭なら「—」をはさまない
+  // 「_」を出すのは、直していないとき。コードは「名前 —」の組で並べ、「_」はその続きに置く
   const next = progression.length;
   const showCursor = editing < 0;
   const rows = Math.max(1, Math.ceil((next + (showCursor ? 1 : 0)) / PER_ROW));
@@ -218,7 +218,6 @@ function renderProgression() {
   });
   progression.forEach((chord, i) => {
     const row = rowEls[Math.floor(i / PER_ROW)];
-    if (i % PER_ROW > 0) row.append(dash(i - 1));
     const name = document.createElement('button');
     name.type = 'button';
     name.className = 'name';
@@ -233,14 +232,10 @@ function renderProgression() {
       }
       renderProgression();
     });
-    row.append(name);
+    row.append(name, dash(i));
   });
   // 直しているあいだは、終わりの「_」は出さない（カーソルは 1 つだけ）
-  if (showCursor) {
-    const row = rowEls[Math.floor(next / PER_ROW)];
-    if (next % PER_ROW > 0) row.append(dash(next - 1));
-    row.append(bar('cursor'));
-  }
+  if (showCursor) rowEls[Math.floor(next / PER_ROW)].append(bar('cursor'));
   fitRows();
 }
 

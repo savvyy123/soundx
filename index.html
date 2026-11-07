@@ -14,6 +14,7 @@
       <header class="header">
         <img class="logo" src="assets/sound_TitleLogo.png" alt="SOUND" />
         <svg class="symbol" id="symbol" viewBox="-800 -800 1600 1600" aria-hidden="true"></svg>
+        <canvas class="halftone" id="halftone" hidden></canvas>
         <button type="button" class="play" id="play" aria-label="再生 / 停止"></button>
         <input class="octave-input" id="octave-input" type="number" step="1" aria-label="オクターブ値" hidden />
         <p class="bpm">BPM : <button type="button" class="bpm-value" id="bpm-value" aria-label="BPM を変える">120</button></p>
@@ -27,6 +28,7 @@
     </div>
     <script src="piano.js"></script>
     <script src="symbol.js"></script>
+    <script src="halftone.js"></script>
     <script src="main.js"></script>
   </body>
 </html>

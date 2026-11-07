@@ -57,10 +57,11 @@ function showChord(chord) {
   SymbolView.show(chord ? chord.notes : []);
 }
 
-// 鳴らして、シンボルの構成音を赤くする
+// 鳴らして、シンボルの構成音を赤くする。鳴った瞬間にシンボルが網点になり、元の形に戻る（halftone.js）
 function playChord(chord) {
   Piano.play(chordMidis(chord));
   showChord(chord);
+  Halftone.burst(60 / bpm);
 }
 
 // ---- BPM ----
@@ -149,7 +150,7 @@ function closeOctave(commit) {
   note.octave = value;
   renderProgression(); // 分数コードの表記が変わることがある
   if (shown === chord) showChord(chord);
-  if (!playing) Piano.play(chordMidis(chord)); // 新しい高さで聞かせる（再生中は次に回ってきたときに変わる）
+  if (!playing) playChord(chord); // 新しい高さで聞かせる（再生中は次に回ってきたときに変わる）
 }
 
 octaveInput.addEventListener('keydown', (e) => {
@@ -260,7 +261,9 @@ function schedule() {
     Piano.play(chordMidis(chord), nextBar);
     const mine = session;
     setTimeout(() => {
-      if (playing && session === mine) showChord(chord);
+      if (!playing || session !== mine) return;
+      showChord(chord);
+      Halftone.burst(60 / bpm);
     }, Math.max(0, (nextBar - Piano.now()) * 1000));
     nextBar += (BEATS_PER_CHORD * 60) / bpm;
     step = (step + 1) % progression.length;
@@ -285,6 +288,7 @@ function stopPlayback() {
   session += 1;
   clearInterval(timer);
   Piano.stop();
+  Halftone.stop();
   showChord(null);
 }
 

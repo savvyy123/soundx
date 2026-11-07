@@ -36,10 +36,11 @@ const SymbolView = (() => {
   // 赤い扇形の上にだけ、同心円をもう一度重ねる（赤い所だけ切り抜いて）。数字はいちばん上
   const defs = add(svg, 'defs');
   const redArea = add(defs, 'clipPath', { id: 'symbol-red-area' });
-  const whiteLayer = add(svg, 'g');
-  const ringLayer = add(svg, 'g');
-  const blackLayer = add(svg, 'g');
-  const redRingLayer = add(svg, 'g', { 'clip-path': 'url(#symbol-red-area)' });
+  // 形の層（class="shape"）は、ハーフトーンのあいだ halftone.js が隠す。数字の層は隠さない
+  const whiteLayer = add(svg, 'g', { class: 'shape' });
+  const ringLayer = add(svg, 'g', { class: 'shape' });
+  const blackLayer = add(svg, 'g', { class: 'shape' });
+  const redRingLayer = add(svg, 'g', { class: 'shape', 'clip-path': 'url(#symbol-red-area)' });
   const labelLayer = add(svg, 'g');
 
   for (const layer of [ringLayer, redRingLayer]) {
@@ -83,9 +84,52 @@ const SymbolView = (() => {
     });
   }
 
+  // 今の形（数字は除く）を canvas に描く。g は、中心が原点・単位が SVG の pt になるように座標を合わせてから渡す
+  // ハーフトーンの下絵に使う（見た目は SVG と同じ重ね順・色）
+  function paint(g) {
+    const red = getComputedStyle(document.documentElement).getPropertyValue('--red').trim();
+    const rings = () => {
+      g.lineWidth = 3;
+      g.strokeStyle = '#fff';
+      for (const r of RINGS) {
+        g.beginPath();
+        g.arc(0, 0, r, 0, Math.PI * 2);
+        g.stroke();
+      }
+    };
+    const redArea = new Path2D();
+    g.save();
+    g.lineJoin = 'miter';
+    g.miterLimit = 10;
+    for (const { path, black } of keys) {
+      if (black) continue;
+      g.fillStyle = path.classList.contains('on') ? red : '#fff';
+      g.fill(new Path2D(path.getAttribute('d')));
+    }
+    rings();
+    for (const { path, black } of keys) {
+      const shape = new Path2D(path.getAttribute('d'));
+      if (path.classList.contains('on')) redArea.addPath(shape);
+      if (!black) continue;
+      if (path.classList.contains('on')) {
+        g.fillStyle = red;
+      } else {
+        g.lineWidth = 6;
+        g.strokeStyle = '#fff';
+        g.stroke(shape);
+        g.fillStyle = '#000';
+      }
+      g.fill(shape);
+    }
+    g.clip(redArea);
+    rings();
+    g.restore();
+  }
+
   show([]);
   return {
     show,
+    paint,
     onTap: (fn) => {
       tapHandler = fn;
     },

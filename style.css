@@ -93,6 +93,21 @@ body {
   stroke-width: 3;
 }
 
+/* 音が鳴ったときの網点（halftone.js）。シンボルと同じ場所に重ね、押す操作はシンボルに通す
+   網点のあいだはシンボルの形の層を隠し（--shape-opacity）、戻るときに下から浮かび上がらせる */
+.halftone {
+  position: absolute;
+  left: 71.8px;
+  top: 94.9px;
+  width: 258.7px;
+  height: 258.7px;
+  pointer-events: none;
+}
+
+.symbol .shape {
+  opacity: var(--shape-opacity, 1);
+}
+
 /* シンボルの真ん中の押せる所（見えない）。内側から 3 本目の同心円（半径 160.19pt = 25.9px）の中 */
 .play {
   position: absolute;

@@ -11,6 +11,8 @@ const TYPES = [
   { title: 'ディミニッシュコード', suffix: 'dim', intervals: [0, 3, 6] },
   { title: 'セブンスコード', suffix: '7', intervals: [0, 4, 7, 10] },
   { title: 'ナインスコード', suffix: '9', intervals: [0, 4, 7, 10, 14] },
+  // add9 = メジャーに 9 度だけを足す（7 度は入れない）。C の場合 C E G D
+  { title: 'アドナインスコード', suffix: 'add9', intervals: [0, 4, 7, 14] },
 ];
 
 // オクターブ値が「0」のときのルートの高さ（MIDI 番号。60 = 真ん中の C）。C〜B のルートは 60〜71 になる
@@ -217,13 +219,15 @@ function renderProgression() {
   fitRows();
 }
 
-// 幅の狭い画面で長いコード名（G#sus4 など）が 4 つ並ぶと入りきらないので、そのときだけ行を縮める
+// 長いコード名（A#add9、G#sus4 など）が 4 つ並ぶと入りきらないので、そのときだけ行を縮める
+// 左右にはロゴの左端と同じ 17px の余白を残す
+const ROW_MARGIN = 17;
 function fitRows() {
   for (const row of progressionEl.children) {
     row.style.transform = '';
     const kids = [...row.children].map((el) => el.getBoundingClientRect());
     const width = Math.max(...kids.map((b) => b.right)) - Math.min(...kids.map((b) => b.left));
-    const room = row.clientWidth - 8;
+    const room = row.clientWidth - 2 * ROW_MARGIN;
     if (width > room) row.style.transform = `scale(${room / width})`;
   }
 }

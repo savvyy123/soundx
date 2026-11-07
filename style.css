@@ -59,14 +59,15 @@ body {
   object-fit: cover;
 }
 
-/* シンボル（symbol.js が描く）。修正版のシンボルの画像を、Figma の画像の枠（79, 152, 236 × 246）に置いたときと同じ
-   大きさ（白鍵の長さ 110.2px = 1pt あたり 0.1617px）で、中心は（201.1, 224.2）＝ Figma から 55 上。数字が外にはみ出すので、枠は広めに取る */
+/* シンボル（symbol.js が描く）。修正版のシンボルの画像を、Figma の画像の枠（79, 152, 236 × 246）に置いたときとほぼ同じ
+   大きさ（白鍵の長さ 110.3px = 1pt あたり 0.1619px）で、中心は（201.5, 224.5）＝ Figma から 55 上。数字が外にはみ出すので、枠は広めに取る
+   位置と大きさは端数のない px にする（ブラウザは SVG を画素の境目に丸めて描くので、端数だと網点の絵とずれ、網点の終わりに縁が動いて見える） */
 .symbol {
   position: absolute;
-  left: 71.8px;
-  top: 94.9px;
-  width: 258.7px;
-  height: 258.7px;
+  left: 72px;
+  top: 95px;
+  width: 259px;
+  height: 259px;
   overflow: visible;
 }
 
@@ -94,25 +95,25 @@ body {
 }
 
 /* 音が鳴ったときの網点（halftone.js）。シンボルと同じ場所に重ね、押す操作はシンボルに通す
-   網点のあいだはシンボルの形の層を隠し（--shape-opacity）、戻るときに下から浮かび上がらせる */
+   網点のあいだはシンボルの形の層を隠す（数字は残す） */
 .halftone {
   position: absolute;
-  left: 71.8px;
-  top: 94.9px;
-  width: 258.7px;
-  height: 258.7px;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
 }
 
-.symbol .shape {
-  opacity: var(--shape-opacity, 1);
+.symbol.halftoning .shape {
+  visibility: hidden;
 }
 
 /* シンボルの真ん中の押せる所（見えない）。内側から 3 本目の同心円（半径 160.19pt = 25.9px）の中 */
 .play {
   position: absolute;
-  left: 175.2px;
-  top: 198.3px;
+  left: 175.6px;
+  top: 198.6px;
   width: 51.8px;
   height: 51.8px;
   border-radius: 50%;

@@ -6,8 +6,13 @@
   box-sizing: border-box;
 }
 
+/* ページ全体はスクロールさせない（スマホで引っぱりすぎたときに、跳ね返りで後ろのコード一覧がのぞかないように）
+   スクロールするのは、ヘッダーの下のコード一覧だけ（.scroller） */
 html,
 body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
   background: #000;
   color: #fff;
 }
@@ -19,37 +24,47 @@ body {
 }
 
 .page {
+  display: flex;
+  flex-direction: column;
   width: 393px;
   max-width: 100%;
+  height: 100%;
+  height: 100dvh; /* スマホのブラウザで、URL の欄が出入りしても画面の高さに合わせる */
   margin: 0 auto;
 }
 
-/* ロゴ・モチーフ・コード進行。Figma ではコード一覧より上の層にあるので、一覧はこの下に隠れながら流れる
-   中身はすべて Figma の位置から 40 上げた（iPhone のブラウザでは上に URL の欄が出るので、Figma の上の余白 67 は広すぎた。ロゴの上は 27）
-   高さは 442（Figma の 449 から −40、進行を 22 下げて 2 行目まで入れ、その下に 10 の余白。2 行目の下端は 430、「_」は 431） */
+.scroller {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* ロゴ・モチーフ・コード進行。スクロールしても動かない（コード一覧だけがこの下でスクロールする）
+   中身はすべて Figma の位置から 55 上げた（iPhone のブラウザでは上に URL の欄が出るので、Figma の上の余白 67 は広すぎた。ロゴの上は 12）
+   高さは 427（Figma の 449 から −55、進行を 22 下げて 2 行目まで入れ、その下に 12 の余白。2 行目の下端は 415、「_」は 416） */
 .header {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  height: 442px;
+  position: relative;
+  flex: none;
+  height: 427px;
   background: #000;
 }
 
 .logo {
   position: absolute;
   left: 17px;
-  top: 27px;
+  top: 12px;
   width: 207px;
   height: 58px;
   object-fit: cover;
 }
 
 /* シンボル（symbol.js が描く）。修正版のシンボルの画像を、Figma の画像の枠（79, 152, 236 × 246）に置いたときと同じ
-   大きさ（白鍵の長さ 110.2px = 1pt あたり 0.1617px）で、中心は（201.1, 239.2）＝ Figma から 40 上。数字が外にはみ出すので、枠は広めに取る */
+   大きさ（白鍵の長さ 110.2px = 1pt あたり 0.1617px）で、中心は（201.1, 224.2）＝ Figma から 55 上。数字が外にはみ出すので、枠は広めに取る */
 .symbol {
   position: absolute;
   left: 71.8px;
-  top: 109.9px;
+  top: 94.9px;
   width: 258.7px;
   height: 258.7px;
   overflow: visible;
@@ -82,7 +97,7 @@ body {
 .play {
   position: absolute;
   left: 175.2px;
-  top: 213.3px;
+  top: 198.3px;
   width: 51.8px;
   height: 51.8px;
   border-radius: 50%;
@@ -136,7 +151,7 @@ body {
 .bpm {
   position: absolute;
   left: 309px;
-  top: 112px;
+  top: 97px;
   font-family: Futura, 'Jost', sans-serif;
   font-weight: 500;
   font-size: 12px;
@@ -171,14 +186,14 @@ body {
   outline: none;
 }
 
-/* コード進行。1 行目の文字の上端は 372（Figma の 390 から、扇形のオクターブ値と重ならないよう 22 下げ、全体を 40 上げた）
+/* コード進行。1 行目の文字の上端は 357（Figma の 390 から、扇形のオクターブ値と重ならないよう 22 下げ、全体を 55 上げた）
    1 行に 4 つまで、2 行目は 29 下（Figma の 7 枚目）。どちらの行も中央にそろえ、間は 8
    「—」は区切り（文字の上端から 13 下）、「_」は次に入る場所（28 下）で、1 拍ごとに点滅する */
 .progression {
   position: absolute;
   left: 0;
   right: 0;
-  top: 372px;
+  top: 357px;
   font-family: 'Jost', sans-serif;
   font-weight: 500;
   font-size: 20px;
@@ -240,7 +255,7 @@ body {
   }
 }
 
-/* コード一覧。見出しの上端はヘッダーの下から 31（Figma は 480、今は 473）、左端は 27 */
+/* コード一覧。見出しの上端はヘッダーの下から 31（Figma は 480。今はヘッダーの下端 427 から 31）、左端は 27 */
 .chords {
   padding: 31px 0 40px 27px;
 }

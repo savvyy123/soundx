@@ -1,0 +1,287 @@
+/* Figma「sound」の iPhone 14 & 15 Pro（幅 393）の画面。数値は Figma の px */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background: #000;
+  color: #fff;
+}
+
+:root {
+  --bar: #d9d9d9; /* コード進行の棒（Figma の色） */
+  --beat: 0.5s; /* 1 拍の長さ（BPM 120）。BPM を変えると main.js が書き換える */
+  --red: #e61e27; /* 押したコードの構成音 */
+}
+
+.page {
+  width: 393px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* ロゴ・モチーフ・コード進行。Figma ではコード一覧より上の層にあるので、一覧はこの下に隠れながら流れる
+   高さは Figma の 449 から 472 に伸ばした（進行を 22 下げたうえで 2 行目まで入れるため。2 行目の下端は 470、「_」は 471） */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 472px;
+  background: #000;
+}
+
+.logo {
+  position: absolute;
+  left: 17px;
+  top: 67px;
+  width: 207px;
+  height: 58px;
+  object-fit: cover;
+}
+
+/* シンボル（symbol.js が描く）。修正版のシンボルの画像を、Figma の画像の枠（79, 152, 236 × 246）に置いたときと同じ
+   中心（201.1, 279.2）と大きさ（白鍵の長さ 110.2px = 1pt あたり 0.1617px）。数字が外にはみ出すので、枠は広めに取る */
+.symbol {
+  position: absolute;
+  left: 71.8px;
+  top: 149.9px;
+  width: 258.7px;
+  height: 258.7px;
+  overflow: visible;
+}
+
+.symbol .white {
+  fill: #fff;
+}
+
+.symbol .black {
+  fill: #000;
+  stroke: #fff;
+  stroke-width: 6;
+  stroke-miterlimit: 10;
+  paint-order: stroke; /* 縁は外側の半分だけ見せる（sound_BlackObject.svg と同じ見た目） */
+}
+
+.symbol .on {
+  fill: var(--red);
+  stroke: none;
+}
+
+.symbol .ring {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3;
+}
+
+/* シンボルの真ん中の押せる所（見えない）。内側から 3 本目の同心円（半径 160.19pt = 25.9px）の中 */
+.play {
+  position: absolute;
+  left: 175.2px;
+  top: 253.3px;
+  width: 51.8px;
+  height: 51.8px;
+  border-radius: 50%;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* 赤い扇形と数字は押せる（オクターブ値を変える） */
+.symbol .on,
+.symbol .label {
+  cursor: pointer;
+}
+
+/* オクターブ値の入力欄。数字の真ん中に、数字と同じ大きさで重ねる（位置と縮め方は main.js が決める）
+   再生中に下の数字が描き直されても見えないよう、地を黒にする */
+.octave-input {
+  position: absolute;
+  width: 4ch;
+  font-family: Futura, 'Jost', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: normal;
+  text-align: center;
+  color: #fff;
+  caret-color: #fff;
+  background: #000;
+  border: 0;
+  padding: 0;
+  outline: none;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.octave-input::-webkit-inner-spin-button,
+.octave-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.symbol .label {
+  fill: #fff;
+  font-family: Futura, 'Jost', sans-serif;
+  font-weight: 500;
+  font-size: 60px;
+  text-anchor: middle;
+}
+
+/* BPM。数字を押すと入力できる */
+.bpm {
+  position: absolute;
+  left: 309px;
+  top: 152px;
+  font-family: Futura, 'Jost', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: normal;
+}
+
+/* 数字は小さいので、見た目を変えずに押せる範囲だけ広げる */
+.bpm-value {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 10px;
+  margin: -10px;
+  cursor: pointer;
+}
+
+.bpm-input {
+  position: absolute;
+  width: 4ch;
+  font-family: Futura, 'Jost', sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: normal;
+  transform: scale(0.75);
+  transform-origin: left top;
+  color: #fff;
+  caret-color: #fff;
+  background: none;
+  border: 0;
+  padding: 0;
+  outline: none;
+}
+
+/* コード進行。1 行目の文字の上端は 412（Figma は 390。下向きの扇形のオクターブ値と重ならないよう 22 下げた）
+   1 行に 4 つまで、2 行目は 29 下（Figma の 7 枚目）。どちらの行も中央にそろえ、間は 8
+   「—」は区切り（文字の上端から 13 下）、「_」は次に入る場所（28 下）で、1 拍ごとに点滅する */
+.progression {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 412px;
+  font-family: 'Jost', sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+  line-height: normal;
+  white-space: nowrap;
+}
+
+.progression .row {
+  height: 29px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.progression .bar {
+  flex: none;
+  width: 20px;
+  height: 2px;
+  background: var(--bar);
+}
+
+.progression .dash {
+  margin-top: 13px;
+}
+
+.progression .cursor {
+  margin-top: 28px;
+  animation: blink var(--beat) step-end infinite;
+}
+
+/* 入れたコード。押すと直す場所になり、その下に「_」が点滅する */
+.progression .name {
+  position: relative;
+  height: 29px;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.progression .name.editing::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 28px;
+  width: 20px;
+  height: 2px;
+  margin-left: -10px;
+  background: var(--bar);
+  animation: blink var(--beat) step-end infinite;
+}
+
+/* 1 拍の前半は見えて、後半は消える */
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* コード一覧。見出しの上端はヘッダーの下から 31（Figma は 480、今は 503）、左端は 27 */
+.chords {
+  padding: 31px 0 40px 27px;
+}
+
+.section + .section {
+  margin-top: 40px;
+}
+
+.section h2 {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 900;
+  font-size: 12px;
+  line-height: normal;
+}
+
+/* 4 列（85 間隔）× 行 28 間隔。見出しの下端から 1 行目まで 9
+   4 列目は文字の幅だけにする（85 のままだと幅 367 になり、幅 360 のスマホで横にはみ出す） */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 85px) auto;
+  grid-auto-rows: 28px;
+  margin-top: 9px;
+}
+
+.chord {
+  font-family: 'Jost', sans-serif;
+  font-weight: 500;
+  font-size: 20px;
+  line-height: normal;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* 音源のクレジット（仕様書 6 章。Figma にはまだ場所がないので、一覧の下に見出しと同じ大きさで置く） */
+.credit {
+  padding: 0 0 40px 27px;
+  font-family: 'Jost', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+}

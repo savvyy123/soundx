@@ -163,13 +163,13 @@ octaveInput.addEventListener('blur', () => closeOctave(true));
 
 // ---- コード進行 ----
 // 最初は「_」が BPM の間隔で点滅している。一覧のコードを押すと、そこにコード名が入り、「—」をはさんで「_」が次へ進む
-// 1 行に 4 つまで。5 つ目からは 2 行目に入り、8 つ入ると「_」は消える。どちらの行も中央にそろえる（Figma の 7 枚目）
+// 1 行に 4 つまで。5 つ目からは 2 行目、9 つ目からは 3 行目…と、数の上限はない。どの行も中央にそろえる（Figma の 7 枚目）
+// 3 行目からは、行が増えた分だけヘッダーが下に伸びる（コード一覧はその下でスクロールする）
 // 入れたコードを押すと、「_」がそのコードの下に移り（直す場所）、一覧で次に押したコードと入れ替わる。もう一度押すとやめる
 // 「—」を押すと半分の長さになり、その前のコードが 2 拍（半小節）で次へ進む。もう一度押すと 4 拍（1 小節）に戻る
-// 行の終わりのコード（4 つ目・8 つ目）は後ろに「—」がないので、いつも 4 拍
-// 左の丸（A / B）を押すと、A メロと B メロの進行を切り替える。それぞれ別に 8 つまで作れる（Figma の 7 枚目）
+// 行の終わりのコード（4 つ目・8 つ目…）は後ろに「—」がないので、いつも 4 拍
+// 左の丸（A / B）を押すと、A メロと B メロの進行を切り替える。それぞれ別に作れる（Figma の 7 枚目）
 
-const MAX_CHORDS = 8;
 const PER_ROW = 4;
 const FULL = 4; // 1 コードの長さ（拍）
 const HALF = 2; // 「—」を半分にしたときの長さ（拍）
@@ -180,6 +180,7 @@ let editing = -1; // 直しているコードの番号（-1 = 直していない
 
 const progressionEl = document.getElementById('progression');
 const melodyButton = document.getElementById('melody');
+const headerEl = document.querySelector('.header');
 
 function bar(kind) {
   const el = document.createElement('span');
@@ -204,10 +205,11 @@ function dash(i) {
 
 function renderProgression() {
   progressionEl.replaceChildren();
-  // 「_」を出すのは、直していなくて、まだ入る余地があるとき。行の頭なら「—」をはさまない
+  // 「_」を出すのは、直していないとき。行の頭なら「—」をはさまない
   const next = progression.length;
-  const showCursor = editing < 0 && next < MAX_CHORDS;
+  const showCursor = editing < 0;
   const rows = Math.max(1, Math.ceil((next + (showCursor ? 1 : 0)) / PER_ROW));
+  headerEl.style.setProperty('--rows', Math.max(2, rows)); // ヘッダーの高さは 2 行ぶんより縮めない
   const rowEls = Array.from({ length: rows }, () => {
     const row = document.createElement('div');
     row.className = 'row';
@@ -269,10 +271,10 @@ function addChord(chord) {
     chord.beats = progression[editing].beats; // 入れ替えても、その場所の長さはそのまま
     progression[editing] = chord;
     editing = -1;
-  } else if (progression.length < MAX_CHORDS) {
+  } else {
     chord.beats = FULL;
     progression.push(chord);
-  } else return;
+  }
   renderProgression();
 }
 

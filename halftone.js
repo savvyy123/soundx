@@ -163,6 +163,9 @@ void main() {
     const H = Math.round(header.height * dpr);
     canvas.width = W;
     canvas.height = H;
+    // 表示の大きさも画素に合わせて固定する（網点の途中でコード進行の行が増えてヘッダーが伸びても、絵が縦に伸びないように）
+    canvas.style.width = `${W / dpr}px`;
+    canvas.style.height = `${H / dpr}px`;
     const cx = (box.left + box.width / 2 - header.left) * dpr;
     const cy = (box.top + box.height / 2 - header.top) * dpr;
     gl.viewport(0, 0, W, H);

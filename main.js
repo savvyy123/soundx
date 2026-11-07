@@ -165,17 +165,40 @@ octaveInput.addEventListener('blur', () => closeOctave(true));
 // 最初は「_」が BPM の間隔で点滅している。一覧のコードを押すと、そこにコード名が入り、「—」をはさんで「_」が次へ進む
 // 1 行に 4 つまで。5 つ目からは 2 行目に入り、8 つ入ると「_」は消える。どちらの行も中央にそろえる（Figma の 7 枚目）
 // 入れたコードを押すと、「_」がそのコードの下に移り（直す場所）、一覧で次に押したコードと入れ替わる。もう一度押すとやめる
+// 「—」を押すと半分の長さになり、その前のコードが 2 拍（半小節）で次へ進む。もう一度押すと 4 拍（1 小節）に戻る
+// 行の終わりのコード（4 つ目・8 つ目）は後ろに「—」がないので、いつも 4 拍
+// 左の丸（A / B）を押すと、A メロと B メロの進行を切り替える。それぞれ別に 8 つまで作れる（Figma の 7 枚目）
 
 const MAX_CHORDS = 8;
 const PER_ROW = 4;
-const progression = []; // makeChord で作ったコード
+const FULL = 4; // 1 コードの長さ（拍）
+const HALF = 2; // 「—」を半分にしたときの長さ（拍）
+const sections = { A: [], B: [] }; // A メロと B メロ。中身は makeChord で作ったコード（長さ beats 付き）
+let section = 'A';
+let progression = sections[section]; // いま見えている方の進行
 let editing = -1; // 直しているコードの番号（-1 = 直していない）
 
 const progressionEl = document.getElementById('progression');
+const melodyButton = document.getElementById('melody');
 
 function bar(kind) {
   const el = document.createElement('span');
   el.className = `bar ${kind}`;
+  return el;
+}
+
+// i 番目のコードの後ろの「—」。押すと、そのコードの長さを 4 拍 ⇄ 2 拍で切り替える
+function dash(i) {
+  const chord = progression[i];
+  const el = document.createElement('button');
+  el.type = 'button';
+  el.className = 'bar dash';
+  el.classList.toggle('half', chord.beats === HALF);
+  el.setAttribute('aria-label', `${chordName(chord)} の長さ：${chord.beats} 拍`);
+  el.addEventListener('click', () => {
+    chord.beats = chord.beats === HALF ? FULL : HALF;
+    renderProgression();
+  });
   return el;
 }
 
@@ -193,7 +216,7 @@ function renderProgression() {
   });
   progression.forEach((chord, i) => {
     const row = rowEls[Math.floor(i / PER_ROW)];
-    if (i % PER_ROW > 0) row.append(bar('dash'));
+    if (i % PER_ROW > 0) row.append(dash(i - 1));
     const name = document.createElement('button');
     name.type = 'button';
     name.className = 'name';
@@ -213,22 +236,29 @@ function renderProgression() {
   // 直しているあいだは、終わりの「_」は出さない（カーソルは 1 つだけ）
   if (showCursor) {
     const row = rowEls[Math.floor(next / PER_ROW)];
-    if (next % PER_ROW > 0) row.append(bar('dash'));
+    if (next % PER_ROW > 0) row.append(dash(next - 1));
     row.append(bar('cursor'));
   }
   fitRows();
 }
 
-// 長いコード名（A#add9、G#sus4 など）が 4 つ並ぶと入りきらないので、そのときだけ行を縮める
-// 左右にはロゴの左端と同じ 17px の余白を残す
+// 行は画面の中央にそろえるが、左の丸（A / B）と重ならないよう、丸の右 8 より左には出さない。右はロゴの左端と同じ 17 の余白を残す
+// 長いコード名（A#add9、G#sus4 など）が並んで入りきらないときは、まず右へずらし、それでも入らなければ縮める
 const ROW_MARGIN = 17;
+const CIRCLE_GAP = 8;
 function fitRows() {
+  const box = progressionEl.getBoundingClientRect();
+  const minLeft = melodyButton.getBoundingClientRect().right - box.left + CIRCLE_GAP;
+  const maxRight = box.width - ROW_MARGIN;
+  const origin = box.width / 2; // 行は全幅なので、縮める中心は画面の中央
   for (const row of progressionEl.children) {
     row.style.transform = '';
     const kids = [...row.children].map((el) => el.getBoundingClientRect());
-    const width = Math.max(...kids.map((b) => b.right)) - Math.min(...kids.map((b) => b.left));
-    const room = row.clientWidth - 2 * ROW_MARGIN;
-    if (width > room) row.style.transform = `scale(${room / width})`;
+    const left = Math.min(...kids.map((b) => b.left)) - box.left;
+    const right = Math.max(...kids.map((b) => b.right)) - box.left;
+    const scale = Math.min(1, (maxRight - minLeft) / (right - left));
+    const shift = Math.max(0, minLeft - (origin + scale * (left - origin)));
+    if (scale < 1 || shift > 0) row.style.transform = `translateX(${shift}px) scale(${scale})`;
   }
 }
 
@@ -236,22 +266,35 @@ addEventListener('resize', fitRows);
 
 function addChord(chord) {
   if (editing >= 0) {
+    chord.beats = progression[editing].beats; // 入れ替えても、その場所の長さはそのまま
     progression[editing] = chord;
     editing = -1;
   } else if (progression.length < MAX_CHORDS) {
+    chord.beats = FULL;
     progression.push(chord);
   } else return;
   renderProgression();
 }
 
+// A ⇄ B。再生中なら、次のコードから切り替えた方の進行を頭から鳴らす（空なら止める）
+melodyButton.addEventListener('click', () => {
+  section = section === 'A' ? 'B' : 'A';
+  progression = sections[section];
+  editing = -1;
+  document.getElementById('melody-name').textContent = section;
+  renderProgression();
+  if (!playing) showChord(null);
+  else if (progression.length) step = 0;
+  else stopPlayback();
+});
+
 renderProgression();
 
 // ---- 再生 ----
-// シンボルの真ん中を押すと、コード進行を今の BPM で鳴らす。1 コード = 1 小節（4 拍）で、最後まで行ったら最初に戻る
+// シンボルの真ん中を押すと、いま見えている方（A / B）の進行を今の BPM で鳴らす。1 コード = 4 拍（「—」を半分にしたコードは 2 拍）で、最後まで行ったら最初に戻る
 // もう一度押すと止まる。鳴っているコードはシンボルで赤くなる
 // 音は少し先（LOOKAHEAD 秒）まで音の時計で予約するので、画面が重くても拍がずれない。BPM や進行を変えると次の小節から変わる
 
-const BEATS_PER_CHORD = 4;
 const LOOKAHEAD = 0.1;
 let playing = false;
 let session = 0; // 止めたあとに、前の再生の予約が画面を書き換えないよう、再生ごとに番号を変える
@@ -269,7 +312,7 @@ function schedule() {
       showChord(chord);
       Halftone.burst(60 / bpm);
     }, Math.max(0, (nextBar - Piano.now()) * 1000));
-    nextBar += (BEATS_PER_CHORD * 60) / bpm;
+    nextBar += (chord.beats * 60) / bpm;
     step = (step + 1) % progression.length;
   }
 }

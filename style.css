@@ -231,8 +231,27 @@ body {
   background: var(--bar);
 }
 
+/* 「—」は押せる。押すと半分の長さ（10）になり、前のコードが 2 拍で次へ進む */
 .progression .dash {
+  position: relative;
   margin-top: 13px;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.progression .dash.half {
+  width: 10px;
+}
+
+/* 棒は細いので、見た目を変えずに押せる範囲だけ行の高さいっぱいまで広げる */
+.progression .dash::after {
+  content: '';
+  position: absolute;
+  left: -4px;
+  right: -4px;
+  top: -13px;
+  bottom: -14px;
 }
 
 .progression .cursor {
@@ -262,6 +281,39 @@ body {
   margin-left: -10px;
   background: var(--bar);
   animation: blink var(--beat) step-end infinite;
+}
+
+/* A メロ / B メロの切り替え（Figma の 7 枚目、24:634）。丸の上端は進行の 1 行目の上端から 9 下、左端は 27
+   文字は丸の上端にそろえて左右中央（Figma の「A」も丸の真ん中） */
+.melody {
+  position: absolute;
+  left: 27px;
+  top: 366px;
+  width: 35px;
+  height: 35px;
+  color: #fff;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.melody img {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.melody span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  text-align: center;
+  font-family: Futura, 'Jost', sans-serif;
+  font-weight: 500;
+  font-size: 24px;
+  line-height: normal;
 }
 
 /* 1 拍の前半は見えて、後半は消える */

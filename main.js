@@ -276,58 +276,94 @@ function addChord(chord) {
   renderProgression();
 }
 
-// A ⇄ B。再生中なら、次のコードから切り替えた方の進行を頭から鳴らす（空なら止める）
-melodyButton.addEventListener('click', () => {
-  section = section === 'A' ? 'B' : 'A';
+// 見える方を name（'A' / 'B'）にする
+function showSection(name) {
+  section = name;
   progression = sections[section];
   editing = -1;
   document.getElementById('melody-name').textContent = section;
   renderProgression();
+}
+
+// A ⇄ B。再生中なら、次のコードから切り替えた方の進行を頭から鳴らす（空なら止める）
+melodyButton.addEventListener('click', () => {
+  showSection(section === 'A' ? 'B' : 'A');
+  switches += 1;
   if (!playing) showChord(null);
-  else if (progression.length) step = 0;
-  else stopPlayback();
+  else if (progression.length) {
+    playSection = section;
+    step = 0;
+  } else stopPlayback();
 });
 
 renderProgression();
 
 // ---- 再生 ----
-// シンボルの真ん中を押すと、いま見えている方（A / B）の進行を今の BPM で鳴らす。1 コード = 4 拍（「—」を半分にしたコードは 2 拍）で、最後まで行ったら最初に戻る
-// もう一度押すと止まる。鳴っているコードはシンボルで赤くなる
-// 音は少し先（LOOKAHEAD 秒）まで音の時計で予約するので、画面が重くても拍がずれない。BPM や進行を変えると次の小節から変わる
+// 「Play」とシンボルの真ん中：いま見えている方（A か B）の進行だけを、頭からくり返す
+// 「All Play」：A の頭から A → B と続けて鳴らし、B の最後まで行ったら A に戻る（空の方は飛ばす）。表示も鳴っている方に切り替わる
+// 同じものをもう一度押すと止まる。もう一方を押すと、そちらの鳴らし方で頭からやり直す
+// 1 コード = 4 拍（「—」を半分にしたコードは 2 拍）。鳴っているコードはシンボルで赤くなる
+// 音は少し先（LOOKAHEAD 秒）まで音の時計で予約するので、画面が重くても拍がずれない。BPM や進行を変えると次のコードから変わる
 
 const LOOKAHEAD = 0.1;
 let playing = false;
+let mode = 'part'; // 'part' = 見えている方だけ（Play）、'all' = A → B（All Play）
 let session = 0; // 止めたあとに、前の再生の予約が画面を書き換えないよう、再生ごとに番号を変える
 let timer = 0;
-let nextBar = 0; // 次の小節の頭（音の時計）
+let nextBar = 0; // 次のコードの頭（音の時計）
+let playSection = 'A'; // 鳴らしている方
 let step = 0; // 次に鳴らすコードの番号
+let switches = 0; // 丸で A / B を切り替えた回数（切り替えたあとに、前に予約したコードが表示を戻さないように）
 
 function schedule() {
-  while (playing && progression.length && nextBar < Piano.now() + LOOKAHEAD) {
-    const chord = progression[step % progression.length];
+  while (playing && nextBar < Piano.now() + LOOKAHEAD) {
+    if (step >= sections[playSection].length) {
+      // 最後まで鳴った。All Play なら次の方へ（空なら同じ方をくり返す）
+      step = 0;
+      const other = playSection === 'A' ? 'B' : 'A';
+      if (mode === 'all' && sections[other].length) playSection = other;
+    }
+    const list = sections[playSection];
+    if (!list.length) {
+      stopPlayback();
+      return;
+    }
+    const chord = list[step];
+    const from = playSection;
     Piano.play(chordMidis(chord), nextBar);
     const mine = session;
+    const seen = switches;
     setTimeout(() => {
       if (!playing || session !== mine) return;
+      if (mode === 'all' && from !== section && seen === switches) showSection(from);
       showChord(chord);
       Halftone.burst(60 / bpm);
     }, Math.max(0, (nextBar - Piano.now()) * 1000));
     nextBar += (chord.beats * 60) / bpm;
-    step = (step + 1) % progression.length;
+    step += 1;
   }
 }
 
-async function startPlayback() {
-  if (!progression.length) return;
+async function startPlayback(how) {
+  const first = how === 'all' ? (sections.A.length ? 'A' : 'B') : section;
+  if (!sections[first].length) return;
+  mode = how;
   playing = true;
   session += 1;
   const mine = session;
   await Piano.ready();
   if (!playing || session !== mine) return; // 準備のあいだに止められたとき
+  playSection = first;
   step = 0;
   nextBar = Piano.now() + 0.05;
   schedule();
   timer = setInterval(schedule, 25);
+}
+
+function togglePlayback(how) {
+  const again = playing && mode === how;
+  if (playing) stopPlayback();
+  if (!again) startPlayback(how);
 }
 
 function stopPlayback() {
@@ -339,7 +375,9 @@ function stopPlayback() {
   showChord(null);
 }
 
-document.getElementById('play').addEventListener('click', () => (playing ? stopPlayback() : startPlayback()));
+document.getElementById('play').addEventListener('click', () => togglePlayback('part'));
+document.getElementById('play-part').addEventListener('click', () => togglePlayback('part'));
+document.getElementById('play-all').addEventListener('click', () => togglePlayback('all'));
 
 // ---- コードの一覧 ----
 

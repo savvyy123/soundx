@@ -21,6 +21,9 @@ body {
   --bar: #d9d9d9; /* コード進行の棒（Figma の色） */
   --beat: 0.5s; /* 1 拍の長さ（BPM 120）。BPM を変えると main.js が書き換える */
   --red: #e61e27; /* 押したコードの構成音 */
+  /* 「Play」の上端。Figma の 7 枚目（278）をシンボルの位置に合わせると 273 だが、E の扇形が赤いときの
+     オクターブ値（右下 4 時の数字、下端 291）と重なるので、その下まで下げた */
+  --play-top: 291px;
 }
 
 .page {
@@ -281,6 +284,32 @@ body {
   margin-left: -10px;
   background: var(--bar);
   animation: blink var(--beat) step-end infinite;
+}
+
+/* 再生（Figma の 7 枚目 24:636・24:637）。BPM と同じ Futura 12px で、左端も BPM と同じ 309。2 つの間は 21
+   「Play」= 見えている方だけ、「All Play」= A から全部。小さいので、見た目を変えずに押せる範囲だけ広げる */
+.play-text {
+  position: absolute;
+  left: 309px;
+  font-family: Futura, 'Jost', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: normal;
+  white-space: nowrap;
+  color: #fff;
+  background: none;
+  border: 0;
+  padding: 3px 10px;
+  margin: -3px -10px;
+  cursor: pointer;
+}
+
+.play-part {
+  top: var(--play-top);
+}
+
+.play-all {
+  top: calc(var(--play-top) + 21px);
 }
 
 /* A メロ / B メロの切り替え（Figma の 7 枚目、24:634）。丸の上端は進行の 1 行目の上端から 9 下、左端は 27

@@ -1,12 +1,12 @@
 // 音が鳴ったときのシンボルのハーフトーン（main3 の「円」の網点）
-// 鳴った瞬間にシンボルが網点になり、網点の間隔が始まりの値（鳴るたびに START_PITCH の範囲からランダム）から 0 へ縮みながら格子が回って、元の形に戻る
+// 鳴った瞬間にシンボルが網点になり、網点の間隔が START_PITCH から 0 へ縮みながら格子が回って、元の形に戻る
 // 網点はシンボルの色のまま（白い所は白、赤い所は赤）。濃い所は網点が重なってベタになる（main3 と同じ大きさの決め方）。数字は網点にしない
 // 網点は WebGL で画素ごとに計算する。どれだけ細かくしても重さが変わらないので、最後まで縮め続けられ、
 // 網点が画素より細かくなると元の形の絵と同じになる。そこで SVG に戻すので、継ぎ目は見えない
 // WebGL2 が使えない環境では、網点を出さない
 
 const Halftone = (() => {
-  const START_PITCH = [4.5, 30]; // 網点の間隔の始まり（画面の px）。鳴るたびに、この範囲からランダムに選ぶ
+  const START_PITCH = 4.5; // 網点の間隔の始まり（画面の px）
   const START_ANGLE = 45; // 格子の角度の始まり（°。main3 の初期値）
   const TURN = 90; // 元の形に戻るまでに回る角度（°）
   const BEATS = 2; // 元の形に戻るまでの長さ（拍）
@@ -32,7 +32,6 @@ uniform vec2 size;       // canvas の画素
 uniform vec2 origin;     // シンボルの中心（canvas の画素、上から下へ）
 uniform float pitch;     // 格子の間隔（画素）
 uniform float angle;     // 格子の角度（ラジアン）
-uniform vec3 red;        // 赤（--red）。網点の色は白か赤のどちらか多いほうにする（大きな網点で混ぜるとピンクになるので）
 out vec4 color;
 void main() {
   vec2 pix = vec2(gl_FragCoord.x, size.y - gl_FragCoord.y);
@@ -50,8 +49,7 @@ void main() {
       if (t.a < 0.02) continue;
       float r = texture(lut, vec2(t.a * (256.0 / 257.0) + 0.5 / 257.0, 0.5)).r * 0.70710678 * pitch;
       float cover = clamp(r - length(px - center) + 0.5, 0.0, 1.0);
-      vec3 c = t.rgb / t.a;
-      if (cover > best.a) best = vec4(c.g > (1.0 + red.g) * 0.5 ? vec3(1.0) : red, cover);
+      if (cover > best.a) best = vec4(t.rgb / t.a, cover);
     }
   }
   vec4 flat_ = textureLod(src, pix / size, 0.0);
@@ -174,12 +172,9 @@ void main() {
     gl.scissor(x0, H - y1, Math.ceil(box.width * dpr) + 1, Math.ceil(box.height * dpr) + 1);
     gl.uniform2f(at('size'), W, H);
     gl.uniform2f(at('origin'), cx, cy);
-    const red = getComputedStyle(document.documentElement).getPropertyValue('--red').trim();
-    gl.uniform3f(at('red'), ...[1, 3, 5].map((i) => parseInt(red.slice(i, i + 2), 16) / 255));
     upload(W, H, (box.width * dpr) / 1600, cx, cy); // SVG の viewBox は -800〜800
     canvas.hidden = false;
     svg.classList.add('halftoning');
-    const start = START_PITCH[0] + Math.random() * (START_PITCH[1] - START_PITCH[0]);
     const t0 = performance.now();
     const duration = BEATS * beat * 1000;
     const frame = (now) => {
@@ -187,11 +182,11 @@ void main() {
       const t = Math.min(1, (now - t0) / duration);
       const e = (1 - Math.cos(Math.PI * t)) / 2; // ゆっくり始まり、ゆっくり元の形へ
       // 間隔が 0.5 画素より細かくなったら、網点の絵は元の形と同じなので、SVG に戻す
-      if (t >= 1 || start * (1 - e) * dpr < 0.5) {
+      if (t >= 1 || START_PITCH * (1 - e) * dpr < 0.5) {
         stop();
         return;
       }
-      draw(start * (1 - e) * dpr, START_ANGLE + TURN * e);
+      draw(START_PITCH * (1 - e) * dpr, START_ANGLE + TURN * e);
       requestAnimationFrame(frame);
     };
     frame(t0); // 形を隠したのと同じ瞬間に、最初の網点を描く（1 コマ空くとちらつくので）

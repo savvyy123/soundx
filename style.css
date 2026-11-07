@@ -25,30 +25,31 @@ body {
 }
 
 /* ロゴ・モチーフ・コード進行。Figma ではコード一覧より上の層にあるので、一覧はこの下に隠れながら流れる
-   高さは Figma の 449 から 482 に伸ばした（進行を 22 下げたうえで 2 行目まで入れ、その下に 10 の余白。2 行目の下端は 470、「_」は 471） */
+   中身はすべて Figma の位置から 40 上げた（iPhone のブラウザでは上に URL の欄が出るので、Figma の上の余白 67 は広すぎた。ロゴの上は 27）
+   高さは 442（Figma の 449 から −40、進行を 22 下げて 2 行目まで入れ、その下に 10 の余白。2 行目の下端は 430、「_」は 431） */
 .header {
   position: sticky;
   top: 0;
   z-index: 1;
-  height: 482px;
+  height: 442px;
   background: #000;
 }
 
 .logo {
   position: absolute;
   left: 17px;
-  top: 67px;
+  top: 27px;
   width: 207px;
   height: 58px;
   object-fit: cover;
 }
 
 /* シンボル（symbol.js が描く）。修正版のシンボルの画像を、Figma の画像の枠（79, 152, 236 × 246）に置いたときと同じ
-   中心（201.1, 279.2）と大きさ（白鍵の長さ 110.2px = 1pt あたり 0.1617px）。数字が外にはみ出すので、枠は広めに取る */
+   大きさ（白鍵の長さ 110.2px = 1pt あたり 0.1617px）で、中心は（201.1, 239.2）＝ Figma から 40 上。数字が外にはみ出すので、枠は広めに取る */
 .symbol {
   position: absolute;
   left: 71.8px;
-  top: 149.9px;
+  top: 109.9px;
   width: 258.7px;
   height: 258.7px;
   overflow: visible;
@@ -81,7 +82,7 @@ body {
 .play {
   position: absolute;
   left: 175.2px;
-  top: 253.3px;
+  top: 213.3px;
   width: 51.8px;
   height: 51.8px;
   border-radius: 50%;
@@ -135,7 +136,7 @@ body {
 .bpm {
   position: absolute;
   left: 309px;
-  top: 152px;
+  top: 112px;
   font-family: Futura, 'Jost', sans-serif;
   font-weight: 500;
   font-size: 12px;
@@ -170,14 +171,14 @@ body {
   outline: none;
 }
 
-/* コード進行。1 行目の文字の上端は 412（Figma は 390。下向きの扇形のオクターブ値と重ならないよう 22 下げた）
+/* コード進行。1 行目の文字の上端は 372（Figma の 390 から、扇形のオクターブ値と重ならないよう 22 下げ、全体を 40 上げた）
    1 行に 4 つまで、2 行目は 29 下（Figma の 7 枚目）。どちらの行も中央にそろえ、間は 8
    「—」は区切り（文字の上端から 13 下）、「_」は次に入る場所（28 下）で、1 拍ごとに点滅する */
 .progression {
   position: absolute;
   left: 0;
   right: 0;
-  top: 412px;
+  top: 372px;
   font-family: 'Jost', sans-serif;
   font-weight: 500;
   font-size: 20px;
@@ -239,7 +240,7 @@ body {
   }
 }
 
-/* コード一覧。見出しの上端はヘッダーの下から 31（Figma は 480、今は 513）、左端は 27 */
+/* コード一覧。見出しの上端はヘッダーの下から 31（Figma は 480、今は 473）、左端は 27 */
 .chords {
   padding: 31px 0 40px 27px;
 }

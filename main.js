@@ -168,13 +168,15 @@ octaveInput.addEventListener('blur', () => closeOctave(true));
 // 入れたコードを押すと、「_」がそのコードの下に移り（直す場所）、一覧で次に押したコードと入れ替わる。もう一度押すとやめる
 // 「—」を押すと半分の長さになり、その前のコードが 2 拍（半小節）で次へ進む。もう一度押すと 4 拍（1 小節）に戻る
 // 「—」はどのコードの後ろにも付く（行の終わりの 4 つ目・8 つ目…も、行の右に付ける）ので、どのコードの長さも変えられる
-// 左の丸（A / B）を押すと、A メロと B メロの進行を切り替える。それぞれ別に作れる（Figma の 7 枚目）
+// 左の丸（A / B / C…）を押すと、次の文字の進行に切り替わる。それぞれ別に作れる（Figma の 7 枚目）
+// いちばん後ろの方にコードが入っていたら、次の文字の空の方（B、C、D…）を新しく作る。空の方で押すと A に戻る
 
 const PER_ROW = 4;
 const FULL = 4; // 1 コードの長さ（拍）
 const HALF = 2; // 「—」を半分にしたときの長さ（拍）
-const sections = { A: [], B: [] }; // A メロと B メロ。中身は makeChord で作ったコード（長さ beats 付き）
-let section = 'A';
+const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const sections = [[]]; // A、B、C…の順の進行。中身は makeChord で作ったコード（長さ beats 付き）
+let section = 0; // いま見えている方の番号（0 = A）
 let progression = sections[section]; // いま見えている方の進行
 let editing = -1; // 直しているコードの番号（-1 = 直していない）
 
@@ -239,7 +241,7 @@ function renderProgression() {
   fitRows();
 }
 
-// 行は画面の中央にそろえるが、左の丸（A / B）と重ならないよう、丸の右 8 より左には出さない。右はロゴの左端と同じ 17 の余白を残す
+// 行は画面の中央にそろえるが、左の丸（A / B / C…）と重ならないよう、丸の右 8 より左には出さない。右はロゴの左端と同じ 17 の余白を残す
 // 長いコード名（A#add9、G#sus4 など）が並んで入りきらないときは、まず右へずらし、それでも入らなければ縮める
 const ROW_MARGIN = 17;
 const CIRCLE_GAP = 8;
@@ -273,18 +275,25 @@ function addChord(chord) {
   renderProgression();
 }
 
-// 見える方を name（'A' / 'B'）にする
-function showSection(name) {
-  section = name;
+// 見える方を i 番目（0 = A、1 = B…）にする
+function showSection(i) {
+  section = i;
   progression = sections[section];
   editing = -1;
-  document.getElementById('melody-name').textContent = section;
+  document.getElementById('melody-name').textContent = LETTERS[section];
   renderProgression();
 }
 
-// A ⇄ B。再生中なら、次のコードから切り替えた方の進行を頭から鳴らす（空なら止める）
+// 丸を押したときに進む先。空の方からは A へ戻る。いちばん後ろの方が埋まっていたら、次の文字の空の方を作ってそこへ
+function nextSection() {
+  if (!progression.length) return 0;
+  if (section === sections.length - 1 && sections.length < LETTERS.length) sections.push([]);
+  return (section + 1) % sections.length;
+}
+
+// 次の方へ。再生中なら、次のコードから切り替えた方の進行を頭から鳴らす（空なら止める）
 melodyButton.addEventListener('click', () => {
-  showSection(section === 'A' ? 'B' : 'A');
+  showSection(nextSection());
   switches += 1;
   if (!playing) showChord(null);
   else if (progression.length) {
@@ -296,29 +305,37 @@ melodyButton.addEventListener('click', () => {
 renderProgression();
 
 // ---- 再生 ----
-// 「Play」とシンボルの真ん中：いま見えている方（A か B）の進行だけを、頭からくり返す
-// 「All Play」：A の頭から A → B と続けて鳴らし、B の最後まで行ったら A に戻る（空の方は飛ばす）。表示も鳴っている方に切り替わる
+// 「Play」とシンボルの真ん中：いま見えている方（A、B、C…のどれか）の進行だけを、頭からくり返す
+// 「All Play」：A の頭から A → B → C…と続けて鳴らし、最後の方まで行ったら A に戻る（空の方は飛ばす）。表示も鳴っている方に切り替わる
 // 同じものをもう一度押すと止まる。もう一方を押すと、そちらの鳴らし方で頭からやり直す
 // 1 コード = 4 拍（「—」を半分にしたコードは 2 拍）。鳴っているコードはシンボルで赤くなる
 // 音は少し先（LOOKAHEAD 秒）まで音の時計で予約するので、画面が重くても拍がずれない。BPM や進行を変えると次のコードから変わる
 
 const LOOKAHEAD = 0.1;
 let playing = false;
-let mode = 'part'; // 'part' = 見えている方だけ（Play）、'all' = A → B（All Play）
+let mode = 'part'; // 'part' = 見えている方だけ（Play）、'all' = A → B → C…（All Play）
 let session = 0; // 止めたあとに、前の再生の予約が画面を書き換えないよう、再生ごとに番号を変える
 let timer = 0;
 let nextBar = 0; // 次のコードの頭（音の時計）
-let playSection = 'A'; // 鳴らしている方
+let playSection = 0; // 鳴らしている方の番号
 let step = 0; // 次に鳴らすコードの番号
-let switches = 0; // 丸で A / B を切り替えた回数（切り替えたあとに、前に予約したコードが表示を戻さないように）
+let switches = 0; // 丸で方を切り替えた回数（切り替えたあとに、前に予約したコードが表示を戻さないように）
+
+// i 番目の後ろで、コードが入っている最初の方（最後まで行ったら A から探す。なければ i のまま）
+function nextFilled(i) {
+  for (let k = 1; k <= sections.length; k++) {
+    const j = (i + k) % sections.length;
+    if (sections[j].length) return j;
+  }
+  return i;
+}
 
 function schedule() {
   while (playing && nextBar < Piano.now() + LOOKAHEAD) {
     if (step >= sections[playSection].length) {
-      // 最後まで鳴った。All Play なら次の方へ（空なら同じ方をくり返す）
+      // 最後まで鳴った。All Play なら次の方へ（空の方は飛ばす。ほかが全部空なら同じ方をくり返す）
       step = 0;
-      const other = playSection === 'A' ? 'B' : 'A';
-      if (mode === 'all' && sections[other].length) playSection = other;
+      if (mode === 'all') playSection = nextFilled(playSection);
     }
     const list = sections[playSection];
     if (!list.length) {
@@ -342,7 +359,7 @@ function schedule() {
 }
 
 async function startPlayback(how) {
-  const first = how === 'all' ? (sections.A.length ? 'A' : 'B') : section;
+  const first = how === 'all' ? nextFilled(sections.length - 1) : section; // All Play は A から（空なら次の方から）
   if (!sections[first].length) return;
   mode = how;
   playing = true;

@@ -1,4 +1,5 @@
-/* Figma「sound」の iPhone 14 & 15 Pro（幅 393）の画面。数値は Figma の px */
+/* Figma「sound」の iPhone 14 & 15 Pro（幅 393）の画面。数値は Figma の px
+   色は白い地に黒（ユーザー指示 2026-11-08。Figma は黒い地に白なので、色だけ入れ替えた） */
 
 * {
   margin: 0;
@@ -13,12 +14,12 @@ body {
   height: 100%;
   overflow: hidden;
   overscroll-behavior: none;
-  background: #000;
-  color: #fff;
+  background: #fff;
+  color: #000;
 }
 
 :root {
-  --bar: #d9d9d9; /* コード進行の棒（Figma の色） */
+  --bar: #262626; /* コード進行の棒（Figma の黒い地での #d9d9d9 を、白い地に合わせて明暗を反転） */
   --beat: 0.5s; /* 1 拍の長さ（BPM 120）。BPM を変えると main.js が書き換える */
   --red: #e61e27; /* 押したコードの構成音 */
 }
@@ -48,7 +49,7 @@ body {
   position: relative;
   flex: none;
   height: calc(369px + var(--rows, 2) * 29px);
-  background: #000;
+  background: #fff;
 }
 
 .logo {
@@ -73,16 +74,17 @@ body {
   overflow: visible;
 }
 
+/* 白鍵は白に黒い縁、黒鍵は黒ベタ（main3 の白版 sound_white.svg と同じ） */
 .symbol .white {
   fill: #fff;
+  stroke: #000;
+  stroke-width: 6;
+  stroke-miterlimit: 10;
+  paint-order: stroke; /* 縁は外側の半分だけ見せる（sound_white.svg と同じ見た目） */
 }
 
 .symbol .black {
   fill: #000;
-  stroke: #fff;
-  stroke-width: 6;
-  stroke-miterlimit: 10;
-  paint-order: stroke; /* 縁は外側の半分だけ見せる（sound_BlackObject.svg と同じ見た目） */
 }
 
 .symbol .on {
@@ -92,23 +94,23 @@ body {
 
 .symbol .ring {
   fill: none;
-  stroke: #fff;
+  stroke: #000;
   stroke-width: 3;
 }
 
-/* 音が鳴ったときの網点（halftone.js）。シンボルと同じ場所に重ね、押す操作はシンボルに通す
-   網点のあいだはシンボルの形の層を隠す（数字は残す） */
+/* シンボルの網点（halftone.js。ふだんは main3 のプリセット 10、鳴ると粗くなって戻る）。シンボルと同じ場所・大きさに重ね、押す操作はシンボルに通す
+   網点を出している間は、シンボルの形の層を透明にする（数字は残す。赤い扇形を押せるよう、隠さずに透明にする） */
 .halftone {
   position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
+  left: 72px;
+  top: 95px;
+  width: 259px;
+  height: 259px;
   pointer-events: none;
 }
 
 .symbol.halftoning .shape {
-  visibility: hidden;
+  opacity: 0;
 }
 
 /* シンボルの真ん中の押せる所（見えない）。内側から 3 本目の同心円（半径 160.19pt = 25.9px）の中 */
@@ -132,7 +134,7 @@ body {
 }
 
 /* オクターブ値の入力欄。数字の真ん中に、数字と同じ大きさで重ねる（位置と縮め方は main.js が決める）
-   再生中に下の数字が描き直されても見えないよう、地を黒にする */
+   再生中に下の数字が描き直されても見えないよう、地を白にする */
 .octave-input {
   position: absolute;
   width: 4ch;
@@ -141,9 +143,9 @@ body {
   font-size: 16px;
   line-height: normal;
   text-align: center;
-  color: #fff;
-  caret-color: #fff;
-  background: #000;
+  color: #000;
+  caret-color: #000;
+  background: #fff;
   border: 0;
   padding: 0;
   outline: none;
@@ -158,7 +160,7 @@ body {
 }
 
 .symbol .label {
-  fill: #fff;
+  fill: #000;
   font-family: Futura, 'Jost', sans-serif;
   font-weight: 500;
   font-size: 60px;
@@ -198,8 +200,8 @@ body {
   line-height: normal;
   transform: scale(0.75);
   transform-origin: left top;
-  color: #fff;
-  caret-color: #fff;
+  color: #000;
+  caret-color: #000;
   background: none;
   border: 0;
   padding: 0;
@@ -298,7 +300,7 @@ body {
   font-size: 12px;
   line-height: normal;
   white-space: nowrap;
-  color: #fff;
+  color: #000;
   background: none;
   border: 0;
   cursor: pointer;
@@ -326,7 +328,7 @@ body {
   top: 366px;
   width: 35px;
   height: 35px;
-  color: #fff;
+  color: #000;
   background: none;
   border: 0;
   padding: 0;

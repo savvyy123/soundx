@@ -1,15 +1,18 @@
-// 音が鳴ったときのシンボルのハーフトーン（main3 の「円」の網点）
-// 鳴った瞬間にシンボルが網点になり、網点の間隔が START_PITCH から 0 へ縮みながら格子が回って、元の形に戻る
-// 網点はシンボルの色のまま（白い所は白、赤い所は赤）。濃い所は網点が重なってベタになる（main3 と同じ大きさの決め方）。数字は網点にしない
-// 網点は WebGL で画素ごとに計算する。どれだけ細かくしても重さが変わらないので、最後まで縮め続けられ、
-// 網点が画素より細かくなると元の形の絵と同じになる。そこで SVG に戻すので、継ぎ目は見えない
-// WebGL2 が使えない環境では、網点を出さない
+// シンボルの網点（main3 の「円」の網点）
+// ふだんのシンボルは、main3 のプリセット 10 と同じ網点（円・間隔 2pt・大きさ 1.07・角度 0°、
+// 中心から離れるほど濃さを弱めるグラデーション 0.28／始まり 0.33・中心が濃い）。pt はシンボルの SVG の単位で、main3 のポスターと同じ
+// 音が鳴った瞬間に網点が粗くなり（START_PITCH）、格子が回りながら、ふだんの網点へ戻る
+// 網点の色はシンボルの色のまま（黒い所は黒、赤い所は赤）。白い所（白鍵の中と地）は紙なので網点にしない。数字は網点にしない
+// 網点は WebGL で画素ごとに計算する。WebGL2 が使えない環境では、SVG のシンボルをそのまま見せる
 
 const Halftone = (() => {
-  const START_PITCH = 4.5; // 網点の間隔の始まり（画面の px）
-  const START_ANGLE = 45; // 格子の角度の始まり（°。main3 の初期値）
-  const TURN = 90; // 元の形に戻るまでに回る角度（°）
-  const BEATS = 2; // 元の形に戻るまでの長さ（拍）
+  // ふだんの網点（main3 のプリセット 10）。間隔は pt、角度は °
+  const REST = { pitch: 2, size: 1.07, angle: 0, gradAmount: 0.28, gradStart: 0.33 };
+  const GRAD_RADIUS = 658.86; // グラデーションの半径（pt。main3 と同じく、モチーフを囲む四角の半分）
+  const START_PITCH = 4.5; // 鳴った瞬間の網点の間隔（画面の px）
+  const TURN = 90; // ふだんの網点に戻るまでに回る角度（°）
+  const BEATS = 2; // ふだんの網点に戻るまでの長さ（拍）
+  const VIEW = 1600; // シンボルの SVG の viewBox の幅（pt）
 
   const svg = document.getElementById('symbol');
   const canvas = document.getElementById('halftone');
@@ -19,22 +22,27 @@ const Halftone = (() => {
 
   // ---- 網点の計算（画素ごと） ----
   // 画素が入る格子のマスと、そのまわり 8 マスの円を調べる（濃い所は隣の円と重なるため）
-  // マスの濃さと色は、元の形の絵を間隔ぶんぼかしたもの（ミップマップ）から引く
-  // 間隔が 1〜2.5 画素になるあいだに、網点から元の形の絵へ少しずつ移る
+  // マスの濃さと色は、シンボルの絵（色のある所の量を a に）を間隔ぶんぼかしたもの（ミップマップ）から引き、
+  // 中心からの距離でグラデーションをかける（main3 と同じ）。1 画素を 4 か所で調べて平均する（網点が画素と同じくらい細かくても、面積どおりの濃さになるように）
+  // 網点が画素の 0.35〜0.7 倍より細かいときは、網点の面積の割合（濃さ × 大きさ²）でそのまま塗る
   const VERT = `#version 300 es
 in vec2 p;
 void main() { gl_Position = vec4(p, 0.0, 1.0); }`;
   const FRAG = `#version 300 es
 precision highp float;
-uniform sampler2D src;   // 元の形の絵（色は乗算済み、色のある所の量を a に）
+uniform sampler2D src;   // シンボルの絵（色は乗算済み、色のある所の量を a に）
 uniform sampler2D lut;   // 濃さ → 円の半径（格子の間隔 = 1、0.7071 で割って 0〜1 に）
 uniform vec2 size;       // canvas の画素
 uniform vec2 origin;     // シンボルの中心（canvas の画素、上から下へ）
 uniform float pitch;     // 格子の間隔（画素）
 uniform float angle;     // 格子の角度（ラジアン）
+uniform float dotSize;   // 網点の大きさ（main3 の「大きさ」）
+uniform vec3 grad;       // グラデーションの強さ、始まり、半径（画素）
 out vec4 color;
-void main() {
-  vec2 pix = vec2(gl_FragCoord.x, size.y - gl_FragCoord.y);
+
+float fade(float dist) { return 1.0 - grad.x * smoothstep(grad.y, 1.0, min(1.0, dist / grad.z)); }
+
+vec4 dotsAt(vec2 pix) {
   vec2 px = pix - origin;
   float c = cos(angle), s = sin(angle);
   mat2 toGrid = mat2(c, -s, s, c);
@@ -46,14 +54,23 @@ void main() {
     for (int i = -1; i <= 1; i++) {
       vec2 center = fromGrid * ((base + vec2(i, j)) * pitch);
       vec4 t = textureLod(src, (center + origin) / size, lod);
-      if (t.a < 0.02) continue;
-      float r = texture(lut, vec2(t.a * (256.0 / 257.0) + 0.5 / 257.0, 0.5)).r * 0.70710678 * pitch;
-      float cover = clamp(r - length(px - center) + 0.5, 0.0, 1.0);
+      if (t.a < 0.01) continue;
+      float d = t.a * fade(length(center));
+      float r = texture(lut, vec2(d * (256.0 / 257.0) + 0.5 / 257.0, 0.5)).r * 0.70710678 * pitch * dotSize;
+      float cover = clamp((r - length(px - center)) * 2.0 + 0.5, 0.0, 1.0);
       if (cover > best.a) best = vec4(t.rgb / t.a, cover);
     }
   }
+  return vec4(best.rgb * best.a, best.a);
+}
+
+void main() {
+  vec2 pix = vec2(gl_FragCoord.x, size.y - gl_FragCoord.y);
+  vec4 dots = 0.25 * (dotsAt(pix + vec2(-0.25, -0.25)) + dotsAt(pix + vec2(0.25, -0.25))
+                    + dotsAt(pix + vec2(-0.25, 0.25)) + dotsAt(pix + vec2(0.25, 0.25)));
   vec4 flat_ = textureLod(src, pix / size, 0.0);
-  color = mix(flat_, vec4(best.rgb * best.a, best.a), smoothstep(1.0, 2.5, pitch));
+  flat_ *= min(fade(length(pix - origin)) * dotSize * dotSize, 1.0 / max(flat_.a, 1e-4));
+  color = mix(flat_, dots, smoothstep(0.35, 0.7, pitch));
 }`;
 
   const shader = (type, source) => {
@@ -109,23 +126,38 @@ void main() {
 
   const srcTex = gl.createTexture();
   gl.uniform1i(at('src'), 0);
+  const src = document.createElement('canvas');
+  const sg = src.getContext('2d');
 
-  // 今のシンボル（数字は除く）を画面と同じ解像度で描いて、網点の元にする。黒い所は「色なし」にする
-  // k = 1pt あたりの画素、(cx, cy) = シンボルの中心（画素）
-  function upload(W, H, k, cx, cy) {
-    const src = document.createElement('canvas');
+  // canvas をシンボルと同じ大きさ（画面の画素）にして、中心・グラデーションの半径を合わせる。k = 1pt あたりの画素
+  function layout() {
+    const box = svg.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const W = Math.round(box.width * dpr);
+    const H = Math.round(box.height * dpr);
+    if (canvas.width !== W || canvas.height !== H) {
+      canvas.width = W;
+      canvas.height = H;
+    }
+    const k = W / VIEW;
+    gl.viewport(0, 0, W, H);
+    gl.uniform2f(at('size'), W, H);
+    gl.uniform2f(at('origin'), W / 2, H / 2);
+    gl.uniform1f(at('dotSize'), REST.size);
+    gl.uniform3f(at('grad'), REST.gradAmount, REST.gradStart, GRAD_RADIUS * k);
+    return { W, H, k, dpr };
+  }
+
+  // 今のシンボル（数字は除く）を画面と同じ解像度で描いて、網点の元にする（白い所は透明＝紙）
+  function upload(W, H, k) {
     src.width = W;
     src.height = H;
-    const s = src.getContext('2d', { willReadFrequently: true });
-    s.setTransform(k, 0, 0, k, cx, cy);
-    SymbolView.paint(s);
-    const img = s.getImageData(0, 0, W, H);
-    const d = img.data;
-    for (let i = 0; i < d.length; i += 4) if (Math.max(d[i], d[i + 1], d[i + 2]) <= 60) d[i + 3] = 0;
+    sg.setTransform(k, 0, 0, k, W / 2, H / 2);
+    SymbolView.paint(sg);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, srcTex);
     gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, src);
     gl.generateMipmap(gl.TEXTURE_2D);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -141,59 +173,62 @@ void main() {
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
-  // ---- アニメーション ----
+  // ---- ふだんの網点と、鳴ったときのアニメーション ----
 
   let job = 0; // 新しく鳴ったら、前のアニメーションをやめる
+  let animating = false;
+
+  // ふだんの網点を描く（シンボルが変わったとき・止めたとき・画面の大きさが変わったとき）
+  function rest() {
+    if (animating) return;
+    const { W, H, k } = layout();
+    upload(W, H, k);
+    draw(REST.pitch * k, REST.angle);
+  }
 
   function stop() {
     job += 1;
-    canvas.hidden = true;
-    svg.classList.remove('halftoning');
+    animating = false;
+    rest();
   }
 
   // 鳴った瞬間に呼ぶ。beat = 1 拍の長さ（秒）
   function burst(beat) {
     const mine = ++job;
-    // canvas はヘッダー全体に重ねる（左上が画面の画素の境目にそろうので、ブラウザが絵をぼかしたりずらしたりしない。
-    // 端数の位置に置くと、SVG に戻る瞬間に縁が動いて見える）。描くのはシンボルのまわりだけ
-    const box = svg.getBoundingClientRect();
-    const header = canvas.parentElement.getBoundingClientRect();
-    const dpr = window.devicePixelRatio || 1;
-    const W = Math.round(header.width * dpr);
-    const H = Math.round(header.height * dpr);
-    canvas.width = W;
-    canvas.height = H;
-    // 表示の大きさも画素に合わせて固定する（網点の途中でコード進行の行が増えてヘッダーが伸びても、絵が縦に伸びないように）
-    canvas.style.width = `${W / dpr}px`;
-    canvas.style.height = `${H / dpr}px`;
-    const cx = (box.left + box.width / 2 - header.left) * dpr;
-    const cy = (box.top + box.height / 2 - header.top) * dpr;
-    gl.viewport(0, 0, W, H);
-    gl.enable(gl.SCISSOR_TEST);
-    const x0 = Math.floor((box.left - header.left) * dpr);
-    const y1 = Math.ceil((box.bottom - header.top) * dpr);
-    gl.scissor(x0, H - y1, Math.ceil(box.width * dpr) + 1, Math.ceil(box.height * dpr) + 1);
-    gl.uniform2f(at('size'), W, H);
-    gl.uniform2f(at('origin'), cx, cy);
-    upload(W, H, (box.width * dpr) / 1600, cx, cy); // SVG の viewBox は -800〜800
-    canvas.hidden = false;
-    svg.classList.add('halftoning');
+    animating = true;
+    const { W, H, k, dpr } = layout();
+    upload(W, H, k);
+    const from = START_PITCH * dpr;
+    const to = REST.pitch * k;
     const t0 = performance.now();
     const duration = BEATS * beat * 1000;
     const frame = (now) => {
       if (mine !== job) return;
       const t = Math.min(1, (now - t0) / duration);
-      const e = (1 - Math.cos(Math.PI * t)) / 2; // ゆっくり始まり、ゆっくり元の形へ
-      // 間隔が 0.5 画素より細かくなったら、網点の絵は元の形と同じなので、SVG に戻す
-      if (t >= 1 || START_PITCH * (1 - e) * dpr < 0.5) {
-        stop();
-        return;
-      }
-      draw(START_PITCH * (1 - e) * dpr, START_ANGLE + TURN * e);
-      requestAnimationFrame(frame);
+      const e = (1 - Math.cos(Math.PI * t)) / 2; // ゆっくり始まり、ゆっくりふだんの網点へ
+      draw(from + (to - from) * e, REST.angle - TURN * (1 - e));
+      if (t < 1) requestAnimationFrame(frame);
+      else animating = false;
     };
-    frame(t0); // 形を隠したのと同じ瞬間に、最初の網点を描く（1 コマ空くとちらつくので）
+    frame(t0); // 押したのと同じ瞬間に、最初の網点を描く（1 コマ空くとちらつくので）
   }
+
+  // シンボルが変わったら（赤くなる・戻る）、ふだんの網点を描き直す。鳴ったとき（burst）はそちらで描くので何もしない
+  let queued = false;
+  new MutationObserver(() => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      rest();
+    });
+  }).observe(svg, { subtree: true, childList: true, attributes: true, attributeFilter: ['d', 'class'] });
+  window.addEventListener('resize', rest);
+
+  // SVG の形は見えなくする（押せるように、消さずに透明にする）。数字は SVG のまま見せる
+  svg.classList.add('halftoning');
+  canvas.hidden = false;
+  rest();
 
   return { burst, stop };
 })();

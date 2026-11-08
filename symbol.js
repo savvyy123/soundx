@@ -1,5 +1,6 @@
 // シンボル（12 本の扇形）を SVG で描く。真上が C で、時計回りに 30° ずつ半音が並ぶ（仕様書 3.2）
 // 形は assets/sound_BlackObject.svg と同じ（幅 15°、白鍵は長さ 681.7、黒鍵は 465.2、同心円 5 本）。単位は SVG の pt
+// 色は白い地に合わせて、main3 の白版（sound_white.svg）と同じ塗り分け：白鍵は白に黒い縁、同心円は黒（白鍵の上にも見える）、黒鍵は黒ベタ
 // show(構成音) で、構成音の扇形を赤くし、外側にオクターブ値を出す（参考画像どおり）
 // 赤い扇形か数字を押すと、onTap で渡した関数を（音名, 数字の要素）で呼ぶ。赤くない扇形は押しても何も起きない
 
@@ -32,11 +33,11 @@ const SymbolView = (() => {
     return `M0 0L${x0} ${y0}A${r} ${r} 0 0 1 ${x1} ${y1}Z`;
   };
 
-  // 重ね順（sound_BlackObject.svg と同じ）：白鍵 → 同心円 → 黒鍵（黒の塗り＋白い縁）
+  // 重ね順（sound_BlackObject.svg・main3 の白版と同じ）：白鍵（白の塗り＋黒い縁）→ 同心円 → 黒鍵（黒ベタ）
   // 赤い扇形の上にだけ、同心円をもう一度重ねる（赤い所だけ切り抜いて）。数字はいちばん上
   const defs = add(svg, 'defs');
   const redArea = add(defs, 'clipPath', { id: 'symbol-red-area' });
-  // 形の層（class="shape"）は、ハーフトーンのあいだ halftone.js が隠す。数字の層は隠さない
+  // 形の層（class="shape"）は、網点を出している間（ふだんはずっと）halftone.js が透明にする（押せるように残す）。数字の層は隠さない
   const whiteLayer = add(svg, 'g', { class: 'shape' });
   const ringLayer = add(svg, 'g', { class: 'shape' });
   const blackLayer = add(svg, 'g', { class: 'shape' });
@@ -85,12 +86,12 @@ const SymbolView = (() => {
   }
 
   // 今の形（数字は除く）を canvas に描く。g は、中心が原点・単位が SVG の pt になるように座標を合わせてから渡す
-  // ハーフトーンの下絵に使う（見た目は SVG と同じ重ね順・色）
+  // ハーフトーンの下絵に使う（見た目は SVG と同じ重ね順・色）。白い所（白鍵の中）は紙なので、透明のまま残す
   function paint(g) {
     const red = getComputedStyle(document.documentElement).getPropertyValue('--red').trim();
     const rings = () => {
       g.lineWidth = 3;
-      g.strokeStyle = '#fff';
+      g.strokeStyle = '#000';
       for (const r of RINGS) {
         g.beginPath();
         g.arc(0, 0, r, 0, Math.PI * 2);
@@ -101,24 +102,28 @@ const SymbolView = (() => {
     g.save();
     g.lineJoin = 'miter';
     g.miterLimit = 10;
+    // 白鍵：黒い縁（線 6 の外側の半分）。中は紙なので、縁の内側の半分ごと消す。赤いときは縁なしの赤
     for (const { path, black } of keys) {
       if (black) continue;
-      g.fillStyle = path.classList.contains('on') ? red : '#fff';
-      g.fill(new Path2D(path.getAttribute('d')));
+      const shape = new Path2D(path.getAttribute('d'));
+      if (path.classList.contains('on')) {
+        g.fillStyle = red;
+        g.fill(shape);
+        continue;
+      }
+      g.lineWidth = 6;
+      g.strokeStyle = '#000';
+      g.stroke(shape);
+      g.globalCompositeOperation = 'destination-out';
+      g.fill(shape);
+      g.globalCompositeOperation = 'source-over';
     }
     rings();
     for (const { path, black } of keys) {
       const shape = new Path2D(path.getAttribute('d'));
       if (path.classList.contains('on')) redArea.addPath(shape);
       if (!black) continue;
-      if (path.classList.contains('on')) {
-        g.fillStyle = red;
-      } else {
-        g.lineWidth = 6;
-        g.strokeStyle = '#fff';
-        g.stroke(shape);
-        g.fillStyle = '#000';
-      }
+      g.fillStyle = path.classList.contains('on') ? red : '#000';
       g.fill(shape);
     }
     g.clip(redArea);

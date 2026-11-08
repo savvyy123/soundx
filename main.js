@@ -59,7 +59,7 @@ function showChord(chord) {
   SymbolView.show(chord ? chord.notes : []);
 }
 
-// 鳴らして、シンボルの構成音を赤くする。鳴った瞬間にシンボルが網点になり、元の形に戻る（halftone.js）
+// 鳴らして、シンボルの構成音を赤くする。鳴った瞬間にシンボルの網点が粗くなり、ふだんの網点（main3 のプリセット 10）に戻る（halftone.js）
 function playChord(chord) {
   Piano.play(chordMidis(chord));
   showChord(chord);

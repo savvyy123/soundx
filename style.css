@@ -64,12 +64,12 @@ body {
 
 /* シンボル（symbol.js が描く）。修正版のシンボルの画像を、Figma の画像の枠（79, 152, 236 × 246）に置いたときとほぼ同じ
    大きさ（白鍵の長さ 110.3px = 1pt あたり 0.1619px）。数字が外にはみ出すので、枠は広めに取る
-   中心は（201.5, 224.5）＝ Figma から 55 上（7 枚目でも画像の枠は x 79 のまま）
+   位置は白ver（2026-11-09 にユーザーが調整）の (67, 70)。中心は（196.5, 199.5）
    位置と大きさは端数のない px にする（ブラウザは SVG を画素の境目に丸めて描くので、端数だと網点の絵とずれ、網点の終わりに縁が動いて見える） */
 .symbol {
   position: absolute;
-  left: 72px;
-  top: 95px;
+  left: 67px;
+  top: 70px;
   width: 259px;
   height: 259px;
   overflow: visible;
@@ -103,8 +103,8 @@ body {
    網点を出している間は、シンボルの形の層を透明にする（数字は残す。赤い扇形を押せるよう、隠さずに透明にする） */
 .halftone {
   position: absolute;
-  left: 72px;
-  top: 95px;
+  left: 67px;
+  top: 70px;
   width: 259px;
   height: 259px;
   pointer-events: none;
@@ -117,8 +117,8 @@ body {
 /* シンボルの真ん中の押せる所（見えない）。内側から 3 本目の同心円（半径 160.19pt = 25.9px）の中 */
 .play {
   position: absolute;
-  left: 175.6px;
-  top: 198.6px;
+  left: 170.6px;
+  top: 173.6px;
   width: 51.8px;
   height: 51.8px;
   border-radius: 50%;
@@ -290,11 +290,12 @@ body {
   animation: blink var(--beat) step-end infinite;
 }
 
-/* 再生（Figma の 7 枚目 24:636・24:637）。BPM と同じ Futura 12px。「Play」= 見えている方だけ、「All Play」= A から全部
-   位置は Figma（Play 324, 281 / All Play 325, 300）を、シンボルの位置に合わせて 5 上げた
-   （右へ寄せてあるので、E の扇形が赤いときのオクターブ値とは重ならない）
-   小さいので、見た目を変えずに押せる範囲だけ広げる。2 つの間はすき間が 3 しかないので、上下の広げ方を分けて重ならないようにした */
-.play-text {
+/* 再生（Figma の 7 枚目 24:636・24:637）と、Reset・Delete（白ver 50:114・50:117）。BPM と同じ Futura 12px
+   「Play」= 見えている方だけ、「All Play」= A から全部、「Reset」= 白紙に戻す、「Delete」= コードを 1 つ消す
+   位置は白ver（Play 325, 276 / All Play 325, 292 / Reset 324, 164 / Delete 324, 179）
+   小さいので、見た目を変えずに押せる範囲だけ広げる。上下の 2 つはすき間なく並ぶので、外側にだけ広げて重ならないようにする */
+.play-text,
+.edit-text {
   position: absolute;
   font-family: Futura, 'Jost', sans-serif;
   font-weight: 500;
@@ -308,17 +309,31 @@ body {
 }
 
 .play-part {
-  left: 324px;
+  left: 325px;
   top: 276px;
-  padding: 6px 8px 1px;
-  margin: -6px -8px -1px;
+  padding: 6px 8px 0;
+  margin: -6px -8px 0;
 }
 
 .play-all {
   left: 325px;
-  top: 295px;
-  padding: 2px 8px 6px;
-  margin: -2px -8px -6px;
+  top: 292px;
+  padding: 0 8px 6px;
+  margin: 0 -8px -6px;
+}
+
+.edit-reset {
+  left: 324px;
+  top: 164px;
+  padding: 6px 8px 0;
+  margin: -6px -8px 0;
+}
+
+.edit-delete {
+  left: 324px;
+  top: 179px;
+  padding: 0 8px 6px;
+  margin: 0 -8px -6px;
 }
 
 /* A / B / C…の切り替え（Figma の 7 枚目、24:634）。丸の上端は進行の 1 行目の上端から 9 下、左端は 27

@@ -83,7 +83,8 @@ function playChord(chord) {
 
 const BPM_MIN = 30;
 const BPM_MAX = 300;
-let bpm = 120;
+const BPM_START = 120; // 開いたとき・Reset のときの BPM
+let bpm = BPM_START;
 
 const bpmValue = document.getElementById('bpm-value');
 const bpmInput = document.getElementById('bpm-input');
@@ -400,6 +401,32 @@ function stopPlayback() {
   Halftone.stop();
   showChord(null);
 }
+
+// ---- Reset / Delete（白ver の 50:114・50:117） ----
+
+// Reset：白紙に戻す（開いたときと同じ）。A、B、C…の進行をすべて消し、転回を基本形に、BPM を 120 に戻す
+document.getElementById('reset').addEventListener('click', () => {
+  if (playing) stopPlayback();
+  closeOctave(false);
+  closeBpm(false);
+  voicings.clear();
+  sections.splice(0, sections.length, []);
+  setBpm(BPM_START);
+  showSection(0);
+  showChord(null);
+});
+
+// Delete：コードを 1 つ消す。直している（下に「_」がある）コードがあればそれを、なければ見えている進行の最後のコードを消す
+// 再生中に消しても、続きはそのまま流れる（見えている進行が空になったら止まる）
+document.getElementById('delete').addEventListener('click', () => {
+  if (!progression.length) return;
+  closeOctave(false);
+  const i = editing >= 0 ? editing : progression.length - 1;
+  progression.splice(i, 1);
+  editing = -1;
+  renderProgression();
+  if (!playing) showChord(null);
+});
 
 // ---- テンプレート（templates.js。メニューの「テンプレート」から読み込む） ----
 // 今の進行（A、B、C…すべて）・転回・BPM を、テンプレートの状態に入れ替えて、A を見せる

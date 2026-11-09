@@ -432,12 +432,27 @@ body {
   cursor: pointer;
 }
 
+/* アニメーションの長さと動き方（ここを変えると調整できる）
+   開くとき：真ん中の線が消える（--fade）→ 上下の線が傾いて × になる（--tilt）
+   閉じるとき：上下の線が戻る → 真ん中の線が現れる（逆の順） */
+.menu-button {
+  --fade: 150ms;
+  --tilt: 300ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .menu-button span {
   position: absolute;
   left: 7px;
   width: 30px;
   height: 2px;
   background: var(--bar);
+  transform: translate(0, 0) rotate(0deg);
+  transition: transform var(--tilt) var(--ease), opacity var(--fade) linear var(--tilt);
+}
+
+.menu-button.open span {
+  transition: transform var(--tilt) var(--ease) var(--fade), opacity var(--fade) linear;
 }
 
 .menu-button span:nth-child(1) {
@@ -452,8 +467,7 @@ body {
   top: 31px;
 }
 
-/* 開いているときは ×（8 枚目）。上下の線を、× の中心（白ver の座標で 370.3, 44.3）へ動かして ±45° 回す。真ん中の線は消す
-   アニメーションはまだ付けていない（transition を足せば、3 本線から × へ動く） */
+/* 開いているときは ×（8 枚目）。上下の線を、× の中心（白ver の座標で 370.3, 44.3）へ動かしながら ±45° 傾ける。真ん中の線は消す */
 .menu-button.open span:nth-child(1) {
   transform: translate(4.31px, 10.31px) rotate(45deg);
 }

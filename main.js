@@ -10,7 +10,12 @@ const TYPES = [
   { title: 'オーギュメントコード', suffix: 'aug', intervals: [0, 4, 8] },
   { title: 'ディミニッシュコード', suffix: 'dim', intervals: [0, 3, 6] },
   { title: 'セブンスコード', suffix: '7', intervals: [0, 4, 7, 10] },
-  { title: 'ナインスコード', suffix: '9', intervals: [0, 4, 7, 10, 14] },
+  // m7 = マイナーに短 7 度を足す。C の場合 C E♭ G B♭
+  { title: 'マイナーセブンスコード', suffix: 'm7', intervals: [0, 3, 7, 10] },
+  // 7-5 = セブンスの 5 度を半音下げる。C の場合 C E G♭ B♭
+  { title: 'セブンスフラットファイブコード', suffix: '7-5', intervals: [0, 4, 6, 10] },
+  // m7-5 = マイナーセブンスの 5 度を半音下げる（ハーフディミニッシュ）。C の場合 C E♭ G♭ B♭
+  { title: 'マイナーセブンスフラットファイブコード', suffix: 'm7-5', intervals: [0, 3, 6, 10] },
   // add9 = メジャーに 9 度だけを足す（7 度は入れない）。C の場合 C E G D
   { title: 'アドナインスコード', suffix: 'add9', intervals: [0, 4, 7, 14] },
 ];

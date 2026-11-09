@@ -432,11 +432,11 @@ body {
   src: local('PAotoGothicStdN-Medium'), local('A P-OTF あおとゴシック StdN M'), local('A P-OTF Aoto Gothic StdN M');
 }
 
-/* 3 本線（区切り棒と同じ #262626、幅 30・太さ 2・間隔 10。白ver では x 351、y 33 / 43 / 53）
-   押せる範囲は 44 角に広げる。幅 393 より狭い画面でも線の右端が 12 内側に来るよう、右端から置く */
+/* 3 本線（区切り棒と同じ #262626、幅 30・太さ 2・間隔 10。白ver の Group 4 で x 325、y 33 / 43 / 53。Play・Reset と同じ右の列）
+   押せる範囲は 44 角に広げる（線の左上から 7・11 外側）。Play などと同じく左端から置く（幅 375 の画面でも縦にそろう） */
 .menu-button {
   position: absolute;
-  right: 5px;
+  left: 318px;
   top: 22px;
   z-index: 11;
   width: 44px;
@@ -482,7 +482,8 @@ body {
   top: 31px;
 }
 
-/* 開いているときは ×（8 枚目）。上下の線を、× の中心（白ver の座標で 370.3, 44.3）へ動かしながら ±45° 傾ける。真ん中の線は消す */
+/* 開いているときは ×（8 枚目）。上下の線を、3 本線の中心から右へ 4.31・下へ 0.31 の所（8 枚目の × と 3 本線の位置の関係のまま。
+   白ver の座標で 344.3, 44.3）へ動かしながら ±45° 傾ける。真ん中の線は消す */
 .menu-button.open span:nth-child(1) {
   transform: translate(4.31px, 10.31px) rotate(45deg);
 }

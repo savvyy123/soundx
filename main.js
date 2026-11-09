@@ -401,6 +401,32 @@ function stopPlayback() {
   showChord(null);
 }
 
+// ---- テンプレート（templates.js。メニューの「テンプレート」から読み込む） ----
+// 今の進行（A、B、C…すべて）・転回・BPM を、テンプレートの状態に入れ替えて、A を見せる
+// テンプレートに出てこないコードの転回は、基本形に戻す
+function loadTemplate(name) {
+  const template = TEMPLATES[name];
+  if (!template) return;
+  if (playing) stopPlayback();
+  closeOctave(false);
+  closeBpm(false);
+  voicings.clear();
+  const parts = template.parts.map((part) =>
+    part.map(({ chord: label, beats, octaves }) => {
+      const root = label[1] === '#' ? label.slice(0, 2) : label[0];
+      const type = TYPES.find((t) => t.suffix === label.slice(root.length));
+      const chord = makeChord(root, type);
+      chord.notes.forEach((note, i) => (note.octave = octaves[i] ?? note.octave));
+      chord.beats = beats;
+      return chord;
+    })
+  );
+  sections.splice(0, sections.length, ...parts);
+  setBpm(template.bpm);
+  showSection(0);
+  showChord(null);
+}
+
 document.getElementById('play').addEventListener('click', () => togglePlayback('part'));
 document.getElementById('play-part').addEventListener('click', () => togglePlayback('part'));
 document.getElementById('play-all').addEventListener('click', () => togglePlayback('all'));

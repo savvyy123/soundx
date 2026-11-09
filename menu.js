@@ -35,6 +35,13 @@
     const item = e.target.closest('[data-page]');
     if (item) show(item.dataset.page);
   });
+  // テンプレートの曲名を押すと、その進行を読み込んで（main.js の loadTemplate）メニューを閉じる
+  menu.addEventListener('click', (e) => {
+    const template = e.target.closest('[data-template]');
+    if (!template) return;
+    loadTemplate(template.dataset.template);
+    show(null);
+  });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && current !== null) back();
   });

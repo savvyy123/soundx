@@ -541,7 +541,18 @@ body {
   margin-top: 49px;
 }
 
-/* テンプレートの曲名は左右中央 */
+/* テンプレートの曲名は左右中央。押すとその進行を読み込む（見た目は文字のまま、押せる範囲だけ広げる） */
 .menu-center {
   text-align: center;
+}
+
+.menu-template {
+  padding: 12px 20px;
+  margin: -12px -20px;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
 }

@@ -6,18 +6,18 @@ const ROOTS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const TYPES = [
   { title: 'メジャーコード', suffix: '', intervals: [0, 4, 7] },
   { title: 'マイナーコード', suffix: 'm', intervals: [0, 3, 7] },
-  { title: 'サスフォーコード', suffix: 'sus4', intervals: [0, 5, 7] },
-  { title: 'オーギュメントコード', suffix: 'aug', intervals: [0, 4, 8] },
-  { title: 'ディミニッシュコード', suffix: 'dim', intervals: [0, 3, 6] },
-  { title: 'セブンスコード', suffix: '7', intervals: [0, 4, 7, 10] },
+  { title: 'sus4コード', suffix: 'sus4', intervals: [0, 5, 7] },
+  { title: 'augコード', suffix: 'aug', intervals: [0, 4, 8] },
+  { title: 'dimコード', suffix: 'dim', intervals: [0, 3, 6] },
+  { title: '7thコード', suffix: '7', intervals: [0, 4, 7, 10] },
   // m7 = マイナーに短 7 度を足す。C の場合 C E♭ G B♭
-  { title: 'マイナーセブンスコード', suffix: 'm7', intervals: [0, 3, 7, 10] },
+  { title: '7thマイナーコード', suffix: 'm7', intervals: [0, 3, 7, 10] },
   // 7-5 = セブンスの 5 度を半音下げる。C の場合 C E G♭ B♭
-  { title: 'セブンスフラットファイブコード', suffix: '7-5', intervals: [0, 4, 6, 10] },
+  { title: '7-5コード', suffix: '7-5', intervals: [0, 4, 6, 10] },
   // m7-5 = マイナーセブンスの 5 度を半音下げる（ハーフディミニッシュ）。C の場合 C E♭ G♭ B♭
-  { title: 'マイナーセブンスフラットファイブコード', suffix: 'm7-5', intervals: [0, 3, 6, 10] },
+  { title: 'マイナー7-5コード', suffix: 'm7-5', intervals: [0, 3, 6, 10] },
   // add9 = メジャーに 9 度だけを足す（7 度は入れない）。C の場合 C E G D
-  { title: 'アドナインスコード', suffix: 'add9', intervals: [0, 4, 7, 14] },
+  { title: 'add9コード', suffix: 'add9', intervals: [0, 4, 7, 14] },
 ];
 
 // オクターブ値が「0」のときのルートの高さ（MIDI 番号。60 = 真ん中の C）。C〜B のルートは 60〜71 になる

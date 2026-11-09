@@ -25,6 +25,7 @@ body {
 }
 
 .page {
+  position: relative; /* ハンバーガーとメニューは、この中に重ねる */
   display: flex;
   flex-direction: column;
   width: 393px;
@@ -405,4 +406,128 @@ body {
   font-family: 'Jost', sans-serif;
   font-weight: 500;
   font-size: 12px;
+}
+
+/* ---- ハンバーガーメニュー（Figma の白ver・8〜12 枚目） ---- */
+
+/* 書体はあおとゴシック M（Figma の「A P-OTF Aoto Gothic StdN M」）。フォントのファイルはサイトに置けないので、
+   入っている PC（制作した Mac）ではそれを使い、入っていない端末（iPhone など）では Noto Sans JP の Medium で出す */
+@font-face {
+  font-family: 'Aoto Gothic M';
+  src: local('PAotoGothicStdN-Medium'), local('A P-OTF あおとゴシック StdN M'), local('A P-OTF Aoto Gothic StdN M');
+}
+
+/* 3 本線（区切り棒と同じ #262626、幅 30・太さ 2・間隔 10。白ver では x 351、y 33 / 43 / 53）
+   押せる範囲は 44 角に広げる。幅 393 より狭い画面でも線の右端が 12 内側に来るよう、右端から置く */
+.menu-button {
+  position: absolute;
+  right: 5px;
+  top: 22px;
+  z-index: 11;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.menu-button span {
+  position: absolute;
+  left: 7px;
+  width: 30px;
+  height: 2px;
+  background: var(--bar);
+}
+
+.menu-button span:nth-child(1) {
+  top: 11px;
+}
+
+.menu-button span:nth-child(2) {
+  top: 21px;
+}
+
+.menu-button span:nth-child(3) {
+  top: 31px;
+}
+
+/* 開いているときは ×（8 枚目）。上下の線を、× の中心（白ver の座標で 370.3, 44.3）へ動かして ±45° 回す。真ん中の線は消す
+   アニメーションはまだ付けていない（transition を足せば、3 本線から × へ動く） */
+.menu-button.open span:nth-child(1) {
+  transform: translate(4.31px, 10.31px) rotate(45deg);
+}
+
+.menu-button.open span:nth-child(2) {
+  opacity: 0;
+}
+
+.menu-button.open span:nth-child(3) {
+  transform: translate(4.31px, -9.69px) rotate(-45deg);
+}
+
+/* メニューと各ページは、アプリの画面全体を白で覆う。長いページは中だけスクロールする */
+.menu {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #fff;
+  color: #000;
+  font-family: 'Aoto Gothic M', 'Noto Sans JP', sans-serif;
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 24px; /* Figma のあおとゴシック 12 の行の高さ */
+}
+
+/* 項目は左右中央、上端は 166 / 263 / 360 / 457（間隔 97）。押せる範囲は画面の幅いっぱいと上下 12 に広げる */
+.menu-list {
+  position: relative;
+  min-height: 100%;
+}
+
+.menu-item {
+  position: absolute;
+  left: 0;
+  right: 0;
+  padding: 12px 0;
+  margin-top: -12px;
+  font: inherit;
+  color: inherit;
+  text-align: center;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* 各ページ：見出しは上端 166 で左右中央、本文は上端 241・幅 215（左右中央＝幅 393 で左 89）・両端そろえ・字間 1.8 */
+.menu-page {
+  padding: 166px 0 40px;
+}
+
+/* 「上級者用 : 転回とは」だけ、Figma で見出しの上端が 168 */
+.menu-page-low {
+  padding-top: 168px;
+}
+
+.menu-title {
+  font: inherit;
+  text-align: center;
+}
+
+.menu-body {
+  width: 215px;
+  margin: 51px auto 0;
+  letter-spacing: 1.8px;
+  text-align: justify;
+}
+
+.menu-page-low .menu-body {
+  margin-top: 49px;
+}
+
+/* テンプレートの曲名は左右中央 */
+.menu-center {
+  text-align: center;
 }

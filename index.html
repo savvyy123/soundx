@@ -6,7 +6,7 @@
     <title>sound</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@500&family=Noto+Sans+JP:wght@900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@500&family=Noto+Sans+JP:wght@500;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -31,10 +31,39 @@
         <main class="chords" id="chords"></main>
         <footer class="credit">Salamander Grand Piano by Alexander Holm</footer>
       </div>
+      <!-- ハンバーガーメニュー（Figma の 8〜12 枚目）。3 本の線は、開くと上下の 2 本が × になる -->
+      <button type="button" class="menu-button" id="menu-button" aria-label="メニューを開く" aria-expanded="false" aria-controls="menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="menu" id="menu" hidden>
+        <nav class="menu-list" id="menu-list" aria-label="メニュー">
+          <button type="button" class="menu-item" data-page="about" style="top: 166px">このアプリについて</button>
+          <button type="button" class="menu-item" data-page="chord" style="top: 263px">コードとは</button>
+          <button type="button" class="menu-item" data-page="template" style="top: 360px">テンプレート</button>
+          <button type="button" class="menu-item" data-page="inversion" style="top: 457px">上級者用 : 転回とは</button>
+        </nav>
+        <section class="menu-page" data-page="about" hidden>
+          <h2 class="menu-title">このアプリについて</h2>
+          <p class="menu-body">このアプリは、音と音が重なって生まれる和音と呼ばれるものが、どういう構造をしているのかを可視化させようと思い制作しました。背景としてピアノは横にある程度、無制限に続きます。それを円環の中に落とし込むことで、一つのシンボルとして音を理解できるのではないかと考えました。ここでは、コードと呼ばれる和音のドレミに絞って、音を視る体験をしていただけたらと思います。</p>
+        </section>
+        <section class="menu-page" data-page="chord" hidden>
+          <h2 class="menu-title">コードとは</h2>
+          <p class="menu-body">和音を英語にすると、コード（Chord)になります。コードは、例えばCというコードであればドを基準として（ルート音）ドミソという構成音をしています。つまり、コードというのは、音が重なった響きをアルファベットで区別するために作られたシステムです。世の中の音楽は、このシステムの中に全て収まります。なので、このアプリを遊ぶときは、「曲名　コード」のように好きな曲を検索して出てきたコードの羅列を並べるだけで誰でも、曲を演奏できるようになります。</p>
+        </section>
+        <section class="menu-page" data-page="template" hidden>
+          <h2 class="menu-title">テンプレート</h2>
+          <p class="menu-body menu-center">米津玄師-Lemon</p>
+        </section>
+        <section class="menu-page menu-page-low" data-page="inversion" hidden>
+          <h2 class="menu-title">上級者用 : 転回とは</h2>
+          <p class="menu-body">このアプリを遊んでくれた人は、思ったかもしれません。原曲と、並べたコード進行がなんか違うような気がすると。これは、ほとんど転回と呼ばれるテクニックによって響きが変わっていることが原因です。例えば、 Lemonであれば、G#mが最初のコードですが、私の作ったテンプレートでは、構成音のD#が-1となっていると思います。これが転回です。私たちがよく聞く音楽は弾く人が引きやすいように作られています。コードをそのまま弾くとての移動が大変になり、音もあっちこっちに飛んで、楽曲を支える上でノイズになりがちです。それらの問題を解決するために、同じ構成音のなかで、並び替えて押しやすいようにしようというテクニックです。</p>
+        </section>
+      </div>
     </div>
     <script src="piano.js"></script>
     <script src="symbol.js"></script>
     <script src="halftone.js"></script>
     <script src="main.js"></script>
+    <script src="menu.js"></script>
   </body>
 </html>

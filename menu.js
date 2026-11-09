@@ -25,6 +25,7 @@
     button.setAttribute('aria-expanded', String(open));
     button.setAttribute('aria-label', !open ? 'メニューを開く' : view === 'list' ? 'メニューを閉じる' : 'メニューに戻る');
     for (const el of behind) el.inert = open;
+    document.documentElement.classList.toggle('menu-open', open); // 開いている間は、後ろのページをスクロールさせない
   }
 
   // 1 つ前へ：ページ → メニュー、メニュー → 閉じる

@@ -7,12 +7,11 @@
   box-sizing: border-box;
 }
 
-/* ページ全体はスクロールさせない（スマホで引っぱりすぎたときに、跳ね返りで後ろのコード一覧がのぞかないように）
-   スクロールするのは、ヘッダーの下のコード一覧だけ（.scroller） */
+/* ページ全体をスクロールさせる（Safari・Chrome は、ページがスクロールしたときだけ下の URL の欄などを隠すため）
+   ヘッダーは上に貼りついて動かず、コード一覧がその下を流れる（見た目は、一覧だけがスクロールしていたときと同じ）
+   引っぱりすぎたときの跳ね返り・引っぱって再読み込み（作った進行が消える）は止める */
 html,
 body {
-  height: 100%;
-  overflow: hidden;
   overscroll-behavior: none;
   background: #fff;
   color: #000;
@@ -25,30 +24,19 @@ body {
 }
 
 .page {
-  position: relative; /* ハンバーガーとメニューは、この中に重ねる */
-  display: flex;
-  flex-direction: column;
   width: 393px;
   max-width: 100%;
-  height: 100%;
-  height: 100dvh; /* スマホのブラウザで、URL の欄が出入りしても画面の高さに合わせる */
   margin: 0 auto;
 }
 
-.scroller {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-/* ロゴ・モチーフ・コード進行。スクロールしても動かない（コード一覧だけがこの下でスクロールする）
+/* ロゴ・モチーフ・コード進行。スクロールしても上に貼りついて動かない（コード一覧だけがこの下を流れる）
    中身はすべて Figma の位置から 55 上げた（iPhone のブラウザでは上に URL の欄が出るので、Figma の上の余白 67 は広すぎた。ロゴの上は 12）
    高さは 427（Figma の 449 から −55、進行を 22 下げて 2 行目まで入れ、その下に 12 の余白。2 行目の下端は 415、「_」は 416）
    進行が 3 行以上になったら、1 行（29）ごとに伸ばす。行の数（2 以上）は main.js が --rows に入れる。369 = 1 行目の上端 357 + 下の余白 12 */
 .header {
-  position: relative;
-  flex: none;
+  position: sticky;
+  top: 0;
+  z-index: 1;
   height: calc(369px + var(--rows, 2) * 29px);
   background: #fff;
 }
@@ -433,10 +421,11 @@ body {
 }
 
 /* 3 本線（区切り棒と同じ #262626、幅 30・太さ 2・間隔 10。白ver の Group 4 で x 325、y 33 / 43 / 53。Play・Reset と同じ右の列）
-   押せる範囲は 44 角に広げる（線の左上から 7・11 外側）。Play などと同じく左端から置く（幅 375 の画面でも縦にそろう） */
+   押せる範囲は 44 角に広げる（線の左上から 7・11 外側）。Play などと同じく左端から置く（幅 375 の画面でも縦にそろう）
+   ページがスクロールしても動かないよう画面に固定する。横は、画面の真ん中に置いた幅 393 の列の左端から 318 */
 .menu-button {
-  position: absolute;
-  left: 318px;
+  position: fixed;
+  left: calc(max(0px, (100% - 393px) / 2) + 318px);
   top: 22px;
   z-index: 11;
   width: 44px;
@@ -496,10 +485,18 @@ body {
   transform: translate(4.31px, -9.69px) rotate(-45deg);
 }
 
-/* メニューと各ページは、アプリの画面全体を白で覆う。長いページは中だけスクロールする */
+/* メニューを開いている間は、後ろのページをスクロールさせない */
+html.menu-open {
+  overflow: hidden;
+}
+
+/* メニューと各ページは、アプリの画面（幅 393 の列）を白で覆う。画面に固定し、長いページは中だけスクロールする */
 .menu {
-  position: absolute;
-  inset: 0;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: max(0px, (100% - 393px) / 2);
+  width: min(393px, 100%);
   z-index: 10;
   overflow-y: auto;
   overscroll-behavior: contain;

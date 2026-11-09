@@ -1,6 +1,7 @@
 // ハンバーガーメニュー（Figma の白ver・8〜12 枚目）
 // 右上の 3 本線を押すとメニュー（このアプリについて / コードとは / テンプレート / 上級者用 : 転回とは）が開き、3 本線は × になる
-// 項目を押すとそのページになる。× を押すと、どのページからでもアプリの画面に戻る
+// 項目を押すとそのページになる。× を押すと 1 つ前に戻る（ページ → メニュー → アプリの画面）
+// ページからメニューに戻るときは × のまま。メニューを閉じるときに 3 本線に戻る
 // 開いている間は、後ろのアプリの画面を押せないようにする（inert）
 
 (() => {
@@ -10,8 +11,11 @@
   const pages = [...menu.querySelectorAll('.menu-page')];
   const behind = [document.querySelector('.header'), document.querySelector('.scroller')];
 
-  // view: null = 閉じる、'list' = メニュー、それ以外 = そのページ（data-page の名前）
+  // 今の画面。null = 閉じている、'list' = メニュー、それ以外 = そのページ（data-page の名前）
+  let current = null;
+
   function show(view) {
+    current = view;
     const open = view !== null;
     menu.hidden = !open;
     list.hidden = view !== 'list';
@@ -19,16 +23,19 @@
     menu.scrollTop = 0;
     button.classList.toggle('open', open);
     button.setAttribute('aria-expanded', String(open));
-    button.setAttribute('aria-label', open ? 'メニューを閉じる' : 'メニューを開く');
+    button.setAttribute('aria-label', !open ? 'メニューを開く' : view === 'list' ? 'メニューを閉じる' : 'メニューに戻る');
     for (const el of behind) el.inert = open;
   }
 
-  button.addEventListener('click', () => show(menu.hidden ? 'list' : null));
+  // 1 つ前へ：ページ → メニュー、メニュー → 閉じる
+  const back = () => show(current === 'list' ? null : 'list');
+
+  button.addEventListener('click', () => (current === null ? show('list') : back()));
   list.addEventListener('click', (e) => {
     const item = e.target.closest('[data-page]');
     if (item) show(item.dataset.page);
   });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !menu.hidden) show(null);
+    if (e.key === 'Escape' && current !== null) back();
   });
 })();

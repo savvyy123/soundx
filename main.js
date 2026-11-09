@@ -26,18 +26,25 @@ const BASE_MIDI = 60;
 const MIDI_MIN = 0;
 const MIDI_MAX = 127;
 
-// コード 1 つ。構成音は音名（0〜11）とオクターブ値に分けて持つ（9th の 9 度は、初期値が +1）
-// オクターブ値は赤い扇形から変えられ、コード進行に入れたコードはそれぞれ自分の値を持つ
+// コード 1 つ。構成音は音名（0〜11）とオクターブ値に分けて持つ（add9 の 9 度は、初期値が +1）
+// オクターブ値は赤い扇形から変えられる。同じ名前のコード（ルート＋種類）は、どこに置いても同じ構成音（notes）を共有するので、
+// 1 か所で転回すると、進行のほかの場所（A・B・C…のどの進行でも）・これから入れる分・一覧で鳴らす分も同じ転回になる
+// コード進行の 1 つ 1 つは別のもの（長さ beats はそれぞれ持つ）
+const voicings = new Map(); // コード名 → 構成音（オクターブ値つき）
+
 function makeChord(root, type) {
-  return {
-    root,
-    type,
-    notes: type.intervals.map((interval) => ({
-      pitch: (ROOTS.indexOf(root) + interval) % 12,
-      octave: Math.floor(interval / 12),
-      interval,
-    })),
-  };
+  const key = root + type.suffix;
+  if (!voicings.has(key)) {
+    voicings.set(
+      key,
+      type.intervals.map((interval) => ({
+        pitch: (ROOTS.indexOf(root) + interval) % 12,
+        octave: Math.floor(interval / 12),
+        interval,
+      }))
+    );
+  }
+  return { root, type, notes: voicings.get(key) };
 }
 
 // 実際に鳴らす高さ（MIDI 番号）。ルートからの距離は基本形のまま、オクターブ値の分だけ 12 ずつ上下する
@@ -154,8 +161,8 @@ function closeOctave(commit) {
   label.style.visibility = '';
   const value = parseInt(octaveInput.value.replace('−', '-'), 10);
   if (!commit || !Number.isFinite(value) || value === note.octave) return;
-  note.octave = value;
-  renderProgression(); // 分数コードの表記が変わることがある
+  note.octave = value; // 同じ名前のコードはこの構成音を共有しているので、どこでも同じ転回になる
+  renderProgression(); // 分数コードの表記が変わることがある（同じ名前のコードはすべて）
   if (shown === chord) showChord(chord);
   if (!playing) playChord(chord); // 新しい高さで聞かせる（再生中は次に回ってきたときに変わる）
 }
